@@ -19,25 +19,29 @@ def test():
         stdout=subprocess.PIPE
     )
 
-    BASE_URL = f'http://localhost:{port}'
+    base_url = f'http://localhost:{port}'
     session = requests.Session()
     retry_policy = Retry(total=6, backoff_factor=1)
     retry_adapter = requests.adapters.HTTPAdapter(
         max_retries=retry_policy)
-    session.mount(BASE_URL, retry_adapter)
+    session.mount(base_url, retry_adapter)
 
     try:
         response = session.get(
-            BASE_URL,
+            base_url,
         )
         assert response.status_code == 400
 
         response = session.get(
-            BASE_URL,
-            json={'operation': '3x + 1 = 4', 'step': '3x = 4 - 1'}
+            base_url,
+            json={'operation': '3 * x + 1 - y = 4', 'step': '3 * x + 1 - y = 4'}
         )
         assert response.status_code == 200
-        assert response.json() == { 'fake': 'json' }
+        assert response.json() == {
+            "solution": "[{x: y/3 + 1}]",
+            "is_correct": True,
+            "is_last": False
+        }
     finally:
         process.kill()
         process.wait()
