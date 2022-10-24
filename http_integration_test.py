@@ -27,12 +27,13 @@ def test():
     session.mount(base_url, retry_adapter)
 
     try:
-        response = session.get(
-            base_url,
-        )
+        response = session.get(base_url)
+        assert response.status_code == 405
+
+        response = session.post(base_url)
         assert response.status_code == 400
 
-        response = session.get(
+        response = session.post(
             base_url,
             json={'operation': '3 * x + 1 - y = 4', 'step': '3 * x + 1 - y = 4'}
         )
