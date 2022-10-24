@@ -43,6 +43,13 @@ def test():
             "is_correct": True,
             "is_last": False
         }
+
+        response = session.post(
+            base_url,
+            json={'operation': '(3 * x) * (3 * y)', 'step': '(3 * x) * (3 * y)', 'task': 'factor'}
+        )
+        assert response.status_code == 200
+        assert response.json() == response.json() | {'solution': '9*i*y'}
     finally:
         process.kill()
         process.wait()
