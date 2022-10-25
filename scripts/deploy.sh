@@ -1,11 +1,10 @@
 #!/usr/bin/env bash
 cd "$(dirname "${BASH_SOURCE[0]}")/.." || exit
 
-if ! command -v gcloud &> /dev/null
-then
-    echo "Google Cloud CLI not found. Install instructions -> https://cloud.google.com/sdk/docs/install"
-    exit
-fi
+source scripts/install_cli_tools.sh
+
+gcloud config set project equal-proto-production
+trap "gcloud config set project equal-proto-development" EXIT
 
 gcloud functions deploy http-compute-calculation \
   --gen2 \
