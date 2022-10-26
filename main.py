@@ -19,6 +19,7 @@ try:
 except Exception:
     firestore_client = None
 
+
 @functions_framework.http
 def http_handler(request):
     """ HTTP endpoint deployed on Google Cloud Function.
@@ -30,13 +31,15 @@ def http_handler(request):
         <https://flask.palletsprojects.com/en/1.1.x/api/#flask.make_response>.
     """
 
+    raise 'what'
+
     if request.method != 'POST':
         return '', 405
 
     request_json = request.get_json(silent=True)
     params = request_json
 
-    if not params or not all(key in params for key in ('operation', 'step', 'user_id')):
+    if not params or not all(key in params for key in ('operation', 'step', 'user_id', 'exercise_id')):
         return 'Missing params', 400
 
     try:
@@ -44,20 +47,25 @@ def http_handler(request):
 
         # try:
         now = datetime.datetime.utcnow()
-        document = firestore_client.document("test", now.isoformat())
+        document = firestore_client.document('users',
+                                             params['user_id'],
+                                             'exercises',
+                                             params['exercise_id'],
+                                             'events',
+                                             now.isoformat())
         data = {
-            "user_id": params['user_id'],
-            "operation": params['operation'],
-            "step": params['step'],
-            "task": params.get('task', None),
+            "input_operation": params['operation'],
+            "input_step": params['step'],
+            "input_task": params.get('task', None),
+            "output_solution": solution,
+            "output_is_correct": is_correct,
+            "output_is_last": is_last,
             "created_at": now,
+            "updated_at": now,
         }
-        write_result = document.create(data)
-        print(firestore_client)
-        print(write_result)
+        document.create(data)
         # except Exception:
         #     error_reporting_client.report_exception()
-        #     raise Exception
 
         return {
             'solution': str(solution),

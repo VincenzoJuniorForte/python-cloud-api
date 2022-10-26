@@ -4,17 +4,20 @@ When deployed to Google Cloud, this function is available via a POST request wit
 
 
     {
-	    "operation": "3 * x = 3",
-	    "step": "3 * x = 3",
+        "user_id": <String>,
+        "exercise_id": <String>,
+	    "operation": <String>, // e.g. "3 * x = 3"
+	    "step": <String>, // e.g. "x = 3 / 3",
         "task": "expand", // optional
     }
 
 ## Requirements
   - python 3.10
   - google cloud CLI ([installation instructions](https://cloud.google.com/sdk/docs/install))
+  - firebase CLI ([installation instructions](https://firebase.google.com/docs/cli#setup_update_cli))
 
 ## Deploying
-Clone the repository, make sure the google cloud CLI is installed and initialized with the correct account and project, the run the following command
+Clone the repository, install the CLI tools and initialize them with a google account with admin rights, then run the following command
 
     ./scripts/deploy.sh
 
@@ -25,7 +28,7 @@ The following command will read dependencies from `requirements.txt` and install
 
 ## Serving the endpoint on localhost
 
-    ./scripts/serve.sh
+    ./scripts/serve_local.sh
 
 Running this command will make the function available on localhost:8080 via HTTP
 

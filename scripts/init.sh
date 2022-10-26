@@ -14,5 +14,5 @@ pip-install-quiet requirements.txt
 
 source scripts/install_cli_tools.sh
 
-gcloud config set project equal-proto-development
-firebase use equal-proto-development
+gcloud config set project equal-proto-development > /dev/null
+firebase use equal-proto-development > /dev/null

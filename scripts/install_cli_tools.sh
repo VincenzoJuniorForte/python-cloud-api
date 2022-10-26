@@ -11,3 +11,8 @@ then
     echo "Firebase CLI not found. Install instructions -> https://firebase.google.com/docs/cli#setup_update_cli"
     exit
 fi
+
+#TODO
+#firebase login
+#gcloud auth application-default login
+#gcloud auth login
