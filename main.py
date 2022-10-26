@@ -16,7 +16,8 @@ except DefaultCredentialsError:
 try:
     app = firebase_admin.initialize_app()
     firestore_client = firebase_admin.firestore.client(app)
-except Exception:
+except DefaultCredentialsError:
+    app = None
     firestore_client = None
 
 
@@ -31,8 +32,6 @@ def http_handler(request):
         <https://flask.palletsprojects.com/en/1.1.x/api/#flask.make_response>.
     """
 
-    raise 'what'
-
     if request.method != 'POST':
         return '', 405
 
@@ -43,39 +42,45 @@ def http_handler(request):
         return 'Missing params', 400
 
     try:
-        solution, is_correct, is_last = calculate(params['operation'], params['step'], params.get('task', None))
+        raw_solution, is_correct, is_last = calculate(params['operation'], params['step'], params.get('task', None))
+        formatted_solution = str(raw_solution)
 
-        # try:
-        now = datetime.datetime.utcnow()
-        document = firestore_client.document('users',
-                                             params['user_id'],
-                                             'exercises',
-                                             params['exercise_id'],
-                                             'events',
-                                             now.isoformat())
-        data = {
-            "input_operation": params['operation'],
-            "input_step": params['step'],
-            "input_task": params.get('task', None),
-            "output_solution": solution,
-            "output_is_correct": is_correct,
-            "output_is_last": is_last,
-            "created_at": now,
-            "updated_at": now,
-        }
-        document.create(data)
-        # except Exception:
-        #     error_reporting_client.report_exception()
+        try:
+            now = datetime.datetime.utcnow()
+            document = firestore_client.document('users',
+                                                 params['user_id'],
+                                                 'exercises',
+                                                 params['exercise_id'],
+                                                 'events',
+                                                 now.isoformat())
+            data = {
+                'input_operation': params['operation'],
+                'input_step': params['step'],
+                'input_task': params.get('task', None),
+                'output_solution': formatted_solution,
+                'output_is_correct': is_correct,
+                'output_is_last': is_last,
+                'created_at': now,
+                'updated_at': now,
+            }
+            document.create(data)
+        except Exception as e:
+            report_exception(error_reporting_client, e)
 
         return {
-            'solution': str(solution),
+            'solution': formatted_solution,
             'is_correct': is_correct,
             'is_last': is_last
         }
-    except Exception:
-        if error_reporting_client:
-            error_reporting_client.report_exception()
+    except Exception as e:
+        report_exception(error_reporting_client, e)
         abort(500)
+
+
+def report_exception(client, exception):
+    if client:
+        client.report_exception()
+    print(repr(exception))
 
 
 def calculate(operation, step, task='expand'):
