@@ -45,16 +45,6 @@ def call_function(setup):
     return _call_function
 
 
-def test_only_post_method(setup):
-    response = setup['http_session'].get(setup['base_url'])
-    assert response.status_code == 405
-
-
-def test_wrong_arguments(call_function):
-    response = call_function()
-    assert response.status_code == 400
-
-
 @pytest.fixture
 def default_payload():
     return {
@@ -63,6 +53,16 @@ def default_payload():
         'operation': 'x = 1',
         'step': 'x = 1',
     }
+
+
+def test_only_post_method(setup):
+    response = setup['http_session'].get(setup['base_url'])
+    assert response.status_code == 405
+
+
+def test_wrong_arguments(call_function):
+    response = call_function()
+    assert response.status_code == 400
 
 
 def test_equation(call_function, default_payload):
@@ -86,7 +86,11 @@ def test_factor(call_function, default_payload):
         'task': 'factor'
     })
     assert response.status_code == 200
-    assert response.json() == response.json() | {'solution': '9*x*y'}
+    assert response.json() == {
+        "solution": "9*x*y",
+        "is_correct": True,
+        "is_last": True
+    }
 
 
 def test_track_events_firestore(call_function, default_payload):

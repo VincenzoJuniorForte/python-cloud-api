@@ -1,5 +1,6 @@
 import datetime
 import uuid
+import traceback
 
 from sympy import *
 from sympy.parsing.sympy_parser import parse_expr
@@ -34,16 +35,30 @@ def http_handler(request):
         <https://flask.palletsprojects.com/en/1.1.x/api/#flask.make_response>.
     """
 
-    if request.method != 'POST':
-        return '', 405
-
-    request_json = request.get_json(silent=True)
-    params = request_json
-
-    if not params or not all(key in params for key in ('operation', 'step', 'user_id', 'exercise_id')):
-        return 'Missing params', 400
-
     try:
+        # CORS
+        if request.method == 'OPTIONS':
+            headers = {
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'POST',
+                'Access-Control-Allow-Headers': 'Content-Type',
+                'Access-Control-Max-Age': '3600'
+            }
+
+            return '', 204, headers
+        headers = {
+            'Access-Control-Allow-Origin': '*'
+        }
+
+        if request.method != 'POST':
+            return {'error': 'Bad method. Allowed methods: [POST]'}, 405, headers
+
+        request_json = request.get_json()
+        params = request_json
+
+        if not params or not all(key in params for key in ('operation', 'step', 'user_id', 'exercise_id')):
+            return {'error': 'Missing params'}, 400, headers
+
         raw_solution, is_correct, is_last = calculate(params['operation'], params['step'], params.get('task', None))
         formatted_solution = str(raw_solution)
 
@@ -73,7 +88,7 @@ def http_handler(request):
             'solution': formatted_solution,
             'is_correct': is_correct,
             'is_last': is_last
-        }
+        }, 200, headers
     except Exception as e:
         report_exception(error_reporting_client, e)
         abort(500)
@@ -82,7 +97,7 @@ def http_handler(request):
 def report_exception(client, exception):
     if client:
         client.report_exception()
-    print(repr(exception))
+    traceback.print_exc()
 
 
 def calculate(operation, step, task='expand'):

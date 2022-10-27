@@ -3,6 +3,15 @@ cd "$(dirname "${BASH_SOURCE[0]}")/.." || exit
 
 source scripts/init_gcloud.sh
 
+run_tests=""
+while [[ ! $run_tests == [yYnN] ]]; do
+  read -rp "Run the test suite before deploy ? (y/N)" run_tests
+done
+
+if [[ $run_tests == [yY] ]]; then
+  scripts/run_tests.sh
+fi
+
 deploy_production=""
 while [[ ! $deploy_production == [yYnN] ]]; do
   read -rp "The function will be deployed to project \"equal-proto-development\". Deploy to \"equal-proto-production\" instead ? (y/N) " deploy_production
