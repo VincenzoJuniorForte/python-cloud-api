@@ -1,10 +1,19 @@
 #!/usr/bin/env bash
 cd "$(dirname "${BASH_SOURCE[0]}")/.." || exit
 
-source scripts/install_cli_tools.sh
+source scripts/init_gcloud.sh
 
-gcloud config set project equal-proto-production
-trap "gcloud config set project equal-proto-development" EXIT
+deploy_production=""
+while [[ ! $deploy_production == [yYnN] ]]; do
+  read -rp "The function will be deployed to project \"equal-proto-development\". Deploy to \"equal-proto-production\" instead ? (y/N) " deploy_production
+done
+
+if [[ $deploy_production == [yY] ]]; then
+  gcloud config set project equal-proto-production
+  trap "gcloud config set project equal-proto-development" EXIT
+else
+  gcloud config set project equal-proto-development
+fi
 
 gcloud functions deploy http-compute-calculation \
   --gen2 \
