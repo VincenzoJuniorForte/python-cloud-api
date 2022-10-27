@@ -1,4 +1,6 @@
 import datetime
+import uuid
+
 from sympy import *
 from sympy.parsing.sympy_parser import parse_expr
 import functions_framework
@@ -52,7 +54,7 @@ def http_handler(request):
                                                  'exercises',
                                                  params['exercise_id'],
                                                  'events',
-                                                 now.isoformat())
+                                                 str(uuid.uuid4()))
             data = {
                 'input_operation': params['operation'],
                 'input_step': params['step'],

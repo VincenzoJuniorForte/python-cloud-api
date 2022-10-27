@@ -15,6 +15,11 @@ else
   gcloud config set project equal-proto-development
 fi
 
+if [[ -z $(gcloud services list | grep "Error Reporting") ]]; then
+  gcloud services enable clouderrorreporting.googleapis.com
+fi
+
+exit
 gcloud functions deploy http-compute-calculation \
   --gen2 \
   --region=europe-west1 \

@@ -34,18 +34,23 @@ Clone the repository, then run the following command :
 
 ### Run the calculate function only
 
-    scripts/cli_calculate.sh <arguments to the calculate function>
+    scripts/run_calculate.sh <arguments to the calculate function>
 
 ### Serve the HTTP function on localhost
 
     scripts/serve_local.sh
 
 Running this command will make the Python function available on localhost:8080 via HTTP.
-It will also emulate the Firestore database locally on localhost:8081 (the DB can be monitored at http://127.0.0.1:4000/firestore)
-Here's a sample command to trigger the function :
 
+It will also emulate the Firestore database locally on localhost:8081 (the DB can be monitored at http://127.0.0.1:4000/firestore).
 
-    curl -X POST localhost:8080 \
+The function can be triggered with `scripts/trigger.sh`
+
+    ./scripts/trigger.sh '{"operation": "x = 1", "step": "x = 1", "user_id": "user-1", "exercise_id": "exercise-1"}'
+
+Or directly with curl
+
+    curl -v localhost:8080 \
     -H 'Content-Type: application/json' \
     -d '{"operation": "x = 1", "step": "x = 1", "user_id": "user-1", "exercise_id": "exercise-1"}'
 
