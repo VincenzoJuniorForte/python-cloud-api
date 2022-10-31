@@ -31,6 +31,8 @@ Clone the repository, then run the following command :
 - python 3.10
 - google cloud CLI ([installation instructions](https://cloud.google.com/sdk/docs/install))
 - firebase CLI ([installation instructions](https://firebase.google.com/docs/cli#setup_update_cli))
+- Java OpenJDK 11 (debian : package `openjdk-11-jdk` ; other OS -> [instructions](https://openjdk.org/install/))
+- Node JS
 
 ### Run the calculate function only
 

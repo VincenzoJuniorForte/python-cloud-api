@@ -9,6 +9,7 @@ while [[ ! $remote == [rRlL] ]]; do
 done
 
 if [[ $remote == [rR] ]]; then
+  echo "Finding URL..."
   URL=$(gcloud functions describe http-compute-calculation --gen2 --region europe-west1 --format="value(serviceConfig.uri)")
 else
   URL="localhost:8080"
