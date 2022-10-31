@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 cd "$(dirname "${BASH_SOURCE[0]}")/.." || exit
 
+source scripts/env.sh
 source scripts/init_gcloud.sh
 
 run_tests=""
 while [[ ! $run_tests == [yYnN] ]]; do
-  read -rp "Run the test suite before deploy ? (y/N)" run_tests
+  read -rp "Run the test suite before deploy ? (y/n) " run_tests
 done
 
 if [[ $run_tests == [yY] ]]; then
@@ -14,21 +15,18 @@ fi
 
 deploy_production=""
 while [[ ! $deploy_production == [yYnN] ]]; do
-  read -rp "The function will be deployed to project \"equal-proto-development\". Deploy to \"equal-proto-production\" instead ? (y/N) " deploy_production
+  read -rp "The function will be deployed to project $GCLOUD_PROJECT_ID_DEV. Deploy to $GCLOUD_PROJECT_ID_PRODUCTION instead ? (y/n) " deploy_production
 done
 
 if [[ $deploy_production == [yY] ]]; then
-  gcloud config set project equal-proto-production
-  trap "gcloud config set project equal-proto-development" EXIT
-else
-  gcloud config set project equal-proto-development
+  gcloud config set project "$GCLOUD_PROJECT_ID_PRODUCTION" &>/dev/null
+  trap "gcloud config set project $GCLOUD_PROJECT_ID_DEV &>/dev/null" EXIT
 fi
 
 if [[ -z $(gcloud services list | grep "Error Reporting") ]]; then
   gcloud services enable clouderrorreporting.googleapis.com
 fi
 
-exit
 gcloud functions deploy http-compute-calculation \
   --gen2 \
   --region=europe-west1 \

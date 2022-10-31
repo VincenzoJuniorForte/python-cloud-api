@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+source scripts/env.sh
+
 if ! command -v gcloud &> /dev/null
 then
     echo "Google Cloud CLI not found. Install instructions -> https://cloud.google.com/sdk/docs/install"
@@ -13,4 +15,4 @@ if [ ! -f "$HOME/.config/gcloud/application_default_credentials.json" ]; then
   gcloud auth application-default login
 fi
 
-gcloud config set project equal-proto-development > /dev/null
+gcloud config set project "$GCLOUD_PROJECT_ID_DEV" &> /dev/null
