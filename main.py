@@ -36,7 +36,6 @@ def http_handler(request):
     """
 
     try:
-        # CORS
         if request.method == 'OPTIONS':
             headers = {
                 'Access-Control-Allow-Origin': '*',
@@ -63,13 +62,10 @@ def http_handler(request):
         formatted_solution = str(raw_solution)
 
         try:
-            now = datetime.datetime.utcnow()
-            document = firestore_client.document('users',
-                                                 params['user_id'],
-                                                 'exercises',
-                                                 params['exercise_id'],
-                                                 'events',
-                                                 str(uuid.uuid4()))
+            batch = firestore_client.batch()
+            user = firestore_client.collection('users').document(params['user_id'])
+            exercise = user.collection('exercises').document(params['exercise_id'])
+            event = exercise.collection('events').document()
             data = {
                 'input_operation': params['operation'],
                 'input_step': params['step'],
@@ -77,18 +73,21 @@ def http_handler(request):
                 'output_solution': formatted_solution,
                 'output_is_correct': is_correct,
                 'output_is_last': is_last,
-                'created_at': now,
-                'updated_at': now,
+                'created_at': firestore.SERVER_TIMESTAMP,
+                'updated_at': firestore.SERVER_TIMESTAMP,
             }
-            document.create(data)
+            batch.set(user, {'name': ''})
+            batch.set(exercise, {'name': ''})
+            batch.set(event, data)
+            batch.commit()
         except Exception as e:
             report_exception(error_reporting_client, e)
 
         return {
-            'solution': formatted_solution,
-            'is_correct': is_correct,
-            'is_last': is_last
-        }, 200, headers
+                   'solution': formatted_solution,
+                   'is_correct': is_correct,
+                   'is_last': is_last
+               }, 200, headers
     except Exception as e:
         report_exception(error_reporting_client, e)
         abort(500)
