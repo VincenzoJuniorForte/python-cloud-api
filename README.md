@@ -56,7 +56,11 @@ Or directly with curl
     -H 'Content-Type: application/json' \
     -d '{"operation": "x = 1", "step": "x = 1", "user_id": "user-1", "exercise_id": "exercise-1"}'
 
-### Add Python dependencies
+### Env and adding Python dependencies
+
+To run `pip install` and other python commands correctly, first run the following command from the repository root
+
+  source .venv/bin/activate
 
 If you add a dependency to the python source code, add it to `requirements.txt` (you can use `python freeze` to get the exact version)
 
