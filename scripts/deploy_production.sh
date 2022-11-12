@@ -13,15 +13,17 @@ if [[ $run_tests == [yY] ]]; then
   scripts/run_tests.sh
 fi
 
-deploy_production=""
-while [[ ! $deploy_production == [yYnN] ]]; do
-  read -rp "The function will be deployed to project $GCLOUD_PROJECT_ID_DEV. Deploy to $GCLOUD_PROJECT_ID_PRODUCTION instead ? (y/n) " deploy_production
+confirm=""
+while [[ ! $confirm == [yYnN] ]]; do
+  read -rp "/!\ The function will be deployed to PRODUCTION project ($GCLOUD_PROJECT_ID_PRODUCTION). Deploy ? (y/n) " confirm
 done
 
-if [[ $deploy_production == [yY] ]]; then
-  gcloud config set project "$GCLOUD_PROJECT_ID_PRODUCTION" &>/dev/null
-  trap "gcloud config set project $GCLOUD_PROJECT_ID_DEV &>/dev/null" EXIT
+if [[ $confirm == [nN] ]]; then
+  exit
 fi
+
+gcloud config set project "$GCLOUD_PROJECT_ID_PRODUCTION" &>/dev/null
+trap "gcloud config set project $GCLOUD_PROJECT_ID_DEV &>/dev/null" EXIT
 
 if [[ -z $(gcloud services list | grep "Error Reporting") ]]; then
   gcloud services enable clouderrorreporting.googleapis.com

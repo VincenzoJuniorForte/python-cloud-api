@@ -52,6 +52,7 @@ def default_payload():
         'exercise_id': 'test-exercise-1',
         'operation': 'x = 1',
         'step': 'x = 1',
+        'step_number': 0,
     }
 
 
@@ -74,6 +75,19 @@ def test_equation(call_function, default_payload):
     assert response.status_code == 200
     assert response.json() == {
         "solution": "[{x: y/3 + 1}]",
+        "is_correct": True,
+        "is_last": False
+    }
+
+def test_input_format(call_function, default_payload):
+    response = call_function(default_payload | {
+        'operation': '(3x + 1)(3/2y + x) = 4',
+        'step': '(3x + 1)(3/2y + x) = 4'
+    })
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "solution": "[{y: 2*(-3*x**2 - x + 4)/(3*(3*x + 1))}]",
         "is_correct": True,
         "is_last": False
     }
@@ -110,12 +124,17 @@ def test_track_events_firestore(call_function, default_payload):
 
     first_event = events[0].to_dict()
     assert first_event == first_event | {
-        'input_operation': 'x = 1',
-        'input_step': 'x = 1',
-        'input_task': None,
-        'output_solution': '[1]',
-        'output_is_last': True,
-        'output_is_correct': True,
+        'input': {
+            'operation': 'x = 1',
+            'step': 'x = 1',
+            'step_number': 0,
+            'task': None,
+        },
+        'output': {
+            'solution': '[1]',
+            'is_last': True,
+            'is_correct': True,
+        }
     }
     assert len(events) == 2
 
