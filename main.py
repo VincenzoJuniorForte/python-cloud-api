@@ -55,7 +55,8 @@ def http_handler(request):
         request_json = request.get_json()
         params = request_json
 
-        if not params or not all(key in params for key in ('operation', 'step', 'user_id', 'exercise_id')):
+        if not params or not all(
+                key in params for key in ('operation', 'step', 'step_number', 'user_id', 'exercise_id')):
             return {'error': 'Missing params'}, 400, headers
 
         raw_solution, is_correct, is_last = calculate(params['operation'], params['step'], params.get('task', None))
@@ -80,17 +81,22 @@ def track_event(params, formatted_solution, is_correct, is_last):
         exercise = user.collection('exercises').document(params['exercise_id'])
         event = exercise.collection('events').document()
         data = {
-            'input_operation': params['operation'],
-            'input_step': params['step'],
-            'input_task': params.get('task', None),
-            'output_solution': formatted_solution,
-            'output_is_correct': is_correct,
-            'output_is_last': is_last,
+            'input': {
+                'operation': params['operation'],
+                'step': params['step'],
+                'task': params.get('task', None),
+                'step_number': params['step_number'],
+            },
+            'output': {
+                'solution': formatted_solution,
+                'is_correct': is_correct,
+                'is_last': is_last,
+            },
             'created_at': firestore.SERVER_TIMESTAMP,
             'updated_at': firestore.SERVER_TIMESTAMP,
         }
-        batch.set(user, {'name': ''})
-        batch.set(exercise, {'name': ''})
+        batch.set(user, {'updated_at': firestore.SERVER_TIMESTAMP})
+        batch.set(exercise, {'updated_at': firestore.SERVER_TIMESTAMP})
         batch.set(event, data)
         batch.commit()
     except Exception as e:
@@ -122,6 +128,7 @@ def calculate(operation, step, task='expand'):
         op = parse_expr(op, transformations='all')
         step = parse_expr(step, transformations='all')
 
+        last = ''
         if task == 'expand':
             last = expand(op)
 
