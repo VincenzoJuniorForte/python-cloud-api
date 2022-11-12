@@ -61,27 +61,7 @@ def http_handler(request):
         raw_solution, is_correct, is_last = calculate(params['operation'], params['step'], params.get('task', None))
         formatted_solution = str(raw_solution)
 
-        try:
-            batch = firestore_client.batch()
-            user = firestore_client.collection('users').document(params['user_id'])
-            exercise = user.collection('exercises').document(params['exercise_id'])
-            event = exercise.collection('events').document()
-            data = {
-                'input_operation': params['operation'],
-                'input_step': params['step'],
-                'input_task': params.get('task', None),
-                'output_solution': formatted_solution,
-                'output_is_correct': is_correct,
-                'output_is_last': is_last,
-                'created_at': firestore.SERVER_TIMESTAMP,
-                'updated_at': firestore.SERVER_TIMESTAMP,
-            }
-            batch.set(user, {'name': ''})
-            batch.set(exercise, {'name': ''})
-            batch.set(event, data)
-            batch.commit()
-        except Exception as e:
-            report_exception(error_reporting_client, e)
+        track_event(params, formatted_solution, is_correct, is_last)
 
         return {
                    'solution': formatted_solution,
@@ -91,6 +71,30 @@ def http_handler(request):
     except Exception as e:
         report_exception(error_reporting_client, e)
         abort(500)
+
+
+def track_event(params, formatted_solution, is_correct, is_last):
+    try:
+        batch = firestore_client.batch()
+        user = firestore_client.collection('users').document(params['user_id'])
+        exercise = user.collection('exercises').document(params['exercise_id'])
+        event = exercise.collection('events').document()
+        data = {
+            'input_operation': params['operation'],
+            'input_step': params['step'],
+            'input_task': params.get('task', None),
+            'output_solution': formatted_solution,
+            'output_is_correct': is_correct,
+            'output_is_last': is_last,
+            'created_at': firestore.SERVER_TIMESTAMP,
+            'updated_at': firestore.SERVER_TIMESTAMP,
+        }
+        batch.set(user, {'name': ''})
+        batch.set(exercise, {'name': ''})
+        batch.set(event, data)
+        batch.commit()
+    except Exception as e:
+        report_exception(error_reporting_client, e)
 
 
 def report_exception(client, exception):
@@ -115,8 +119,8 @@ def calculate(operation, step, task='expand'):
     """
 
     def solve_expression(op, step):
-        op = parse_expr(op)
-        step = parse_expr(step)
+        op = parse_expr(op, transformations='all')
+        step = parse_expr(step, transformations='all')
 
         if task == 'expand':
             last = expand(op)
@@ -133,13 +137,13 @@ def calculate(operation, step, task='expand'):
         is_last = False
 
         eq_cmp = eq.split("=")
-        lhs = parse_expr(eq_cmp[0])
-        rhs = parse_expr(eq_cmp[1])
+        lhs = parse_expr(eq_cmp[0], transformations='all')
+        rhs = parse_expr(eq_cmp[1], transformations='all')
         solution = solve(lhs - rhs)
 
         step_cmp = step.split("=")
-        lhs_step = parse_expr(step_cmp[0])
-        rhs_step = parse_expr(step_cmp[1])
+        lhs_step = parse_expr(step_cmp[0], transformations='all')
+        rhs_step = parse_expr(step_cmp[1], transformations='all')
         solution_step = solve(lhs_step - rhs_step)
 
         is_correct = solution == solution_step
