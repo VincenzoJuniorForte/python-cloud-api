@@ -6,8 +6,9 @@ When deployed to Google Cloud, this function is available via a POST request wit
     {
         "user_id": <String>,
         "exercise_id": <String>,
-	    "operation": <String>, // e.g. "3 * x = 3"
-	    "step": <String>, // e.g. "x = 3 / 3",
+	"operation": <String>, // e.g. "3 * x = 3",
+	"step": <String>, // e.g. "x = 3 / 3",
+	
         "task": "expand", // optional
     }
     // Response payload
