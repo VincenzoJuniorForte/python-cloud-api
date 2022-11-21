@@ -19,6 +19,15 @@ fi
 echo "Sourcing python virtual environment..."
 source .venv/bin/activate
 
+if ! command -v pip &> /dev/null
+then
+  echo "pip command not found, reinstalling virtual environment"
+  rm -rf .venv
+  python3 -m venv .venv
+  source .venv/bin/activate
+fi
+
+
 pip-install-quiet() {
   pip install --requirement "$1" --require-virtualenv --quiet
 }
