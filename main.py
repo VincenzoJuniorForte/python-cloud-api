@@ -95,8 +95,8 @@ def track_event(params, formatted_solution, is_correct, is_last):
             'created_at': firestore.SERVER_TIMESTAMP,
             'updated_at': firestore.SERVER_TIMESTAMP,
         }
-        batch.set(user, {'updated_at': firestore.SERVER_TIMESTAMP})
-        batch.set(exercise, {'updated_at': firestore.SERVER_TIMESTAMP})
+        batch.set(user, {'id': params['user_id'], 'updated_at': firestore.SERVER_TIMESTAMP})
+        batch.set(exercise, {'id': params['exercise_id'], 'updated_at': firestore.SERVER_TIMESTAMP})
         batch.set(event, data)
         batch.commit()
     except Exception as e:
