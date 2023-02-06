@@ -36,6 +36,21 @@ def get_highest_idd(tree):
                     highest_idd = max(highest_idd, get_highest_idd(sub_tree))
     return highest_idd
 
+def solvitutto(expr):
+    return (expand(expr))
+def check_step(expr, new_expr, tree, max_idd):
+    while str(new_expr) == str(expr):
+        max_idd -= 1
+        if max_idd == 0:
+            return(solvitutto(new_expr))
+        print(max_idd)
+        new_tree = evaluate_expression(tree, max_idd)
+        new_expr = build_expression(new_tree)
+        print(new_tree)
+        print(str(new_expr) == str(expr))
+        #print("ciao")
+        print(new_expr)
+    return(new_expr)
 def evaluate_expression(expression, idd):
     results = []
     if idd == 0:
@@ -71,7 +86,9 @@ def evaluate_expression(expression, idd):
             return new_expression
     return expression
 x = Symbol('x')
-ex = "(2*x + 3*x - 4*x) * (- 4 + 3*x)"
+ex1 = "(2*x + 3*x - 4*x**2 + 2*x**2) * (-4 + 3*x)"
+ex = "x*(5 - 2*x)*(- 4 + 3*x)"
+ex1 = "(8 - 1 + 3) * 6 - ((3 + 7) * 2)"
 #{'Mul': [{'Add': [{'Mul': [2, x], 'idd': 3}, {'Mul': [3, x], 'idd': 3}, {'Mul': [-1, {'Mul': [4, x], 'idd': 4}], 'idd': 3}], 'idd': 2},
 #{'Add': [-4, {'Mul': [3, x], 'idd': 3}], 'idd': 2}], 'idd': 1}
 expr = parse_expr(ex, evaluate=False)
@@ -79,12 +96,17 @@ expr = parse_expr(ex, evaluate=False)
 tree = extract_parts(expr, 1)
 print(tree)
 max_idd = get_highest_idd(tree)
-new_tree = evaluate_expression(tree, 1)
-#print(new_tree)
+new_tree = evaluate_expression(tree, max_idd)
 new_expr = build_expression(new_tree)
-if new_expr == expr:
-    new_tree == evaluate_expression(tree, max_idd - 1)
-    new_expr = build_expression(new_tree)
-    print("ciao")
+new_expr = check_step(expr, new_expr, tree, max_idd)
 print(new_expr)
+"""tree = extract_parts(new_expr, 1)
+print(tree)
+max_idd = get_highest_idd(tree)
+new_tree = evaluate_expression(tree, max_idd)
+new_expr = build_expression(new_tree)
+new_expr = check_step(expr, new_expr, tree, max_idd)
+print(new_expr)"""
+#print(new_expr == expr)
+#print(factor(new_expr))
 #print(expand(new_expr))
