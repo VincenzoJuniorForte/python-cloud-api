@@ -1,3 +1,4 @@
+import sympy as sp
 from sympy import *
 
 def extract_parts(expr, idd=1):
@@ -11,14 +12,12 @@ def extract_parts(expr, idd=1):
     return {expr.func.__name__: parts, 'idd': idd}
 
 def build_expression(tree):
-    #if isinstance(tree, Integer):
     items = list(tree.items())[0]
     func_name = items[0]
     func = eval(func_name)
     args = items[1]
     parts = []
     for arg in args:
-        #print(arg)
         if isinstance(arg, dict):
             parts.append(build_expression(arg))
         else:
@@ -36,20 +35,18 @@ def get_highest_idd(tree):
                     highest_idd = max(highest_idd, get_highest_idd(sub_tree))
     return highest_idd
 
-def solvitutto(expr):
-    return (expand(expr))
-def check_step(expr, new_expr, tree, max_idd):
-    while str(new_expr) == str(expr):
-        max_idd -= 1
-        if max_idd == 0:
-            return(solvitutto(new_expr))
-        print(max_idd)
-        new_tree = evaluate_expression(tree, max_idd)
+def check_step(expr, new_expr, tree, idd):
+    s_exp = sorted(str(expr))
+    s_new_exp = sorted(str(new_expr))
+    ex = expand(expr)
+    new_ex = expand(new_expr)
+    while (s_exp == s_new_exp) & (ex == new_ex):
+        idd -= 1
+        s_new_exp = sorted(str(new_expr))
+        if idd == 0:
+            return(expand(new_expr))
+        new_tree = evaluate_expression(tree, idd)
         new_expr = build_expression(new_tree)
-        print(new_tree)
-        print(str(new_expr) == str(expr))
-        #print("ciao")
-        print(new_expr)
     return(new_expr)
 def evaluate_expression(expression, idd):
     results = []
@@ -86,27 +83,14 @@ def evaluate_expression(expression, idd):
             return new_expression
     return expression
 x = Symbol('x')
-ex1 = "(2*x + 3*x - 4*x**2 + 2*x**2) * (-4 + 3*x)"
-ex = "x*(5 - 2*x)*(- 4 + 3*x)"
-ex1 = "(8 - 1 + 3) * 6 - ((3 + 7) * 2)"
-#{'Mul': [{'Add': [{'Mul': [2, x], 'idd': 3}, {'Mul': [3, x], 'idd': 3}, {'Mul': [-1, {'Mul': [4, x], 'idd': 4}], 'idd': 3}], 'idd': 2},
-#{'Add': [-4, {'Mul': [3, x], 'idd': 3}], 'idd': 2}], 'idd': 1}
+ex = "(2*x + 3*x - 4*x**2 + 2*x**2) * (-4 + 3*x)"
+ex1 = "x*(5 - 2*x)*(- 4 + 3*x)"
 expr = parse_expr(ex, evaluate=False)
-#print(expr)
 tree = extract_parts(expr, 1)
 print(tree)
 max_idd = get_highest_idd(tree)
+check_idd = get_highest_idd(tree)
 new_tree = evaluate_expression(tree, max_idd)
 new_expr = build_expression(new_tree)
 new_expr = check_step(expr, new_expr, tree, max_idd)
 print(new_expr)
-"""tree = extract_parts(new_expr, 1)
-print(tree)
-max_idd = get_highest_idd(tree)
-new_tree = evaluate_expression(tree, max_idd)
-new_expr = build_expression(new_tree)
-new_expr = check_step(expr, new_expr, tree, max_idd)
-print(new_expr)"""
-#print(new_expr == expr)
-#print(factor(new_expr))
-#print(expand(new_expr))
