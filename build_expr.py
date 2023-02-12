@@ -2,6 +2,16 @@ import sympy as sp
 from sympy import *
 
 def extract_parts(expr, idd=1):
+    """
+    Creates a dictionary "tree" from a sympy parsed expression
+
+    Args:
+        expr: parsed sympy expression
+        idd (optional): Depth identifier(starts from idd and goes deeper). Defaults to 1.
+
+    Returns:
+        tree: a dictionary with operation and depth as keys and operators as values
+    """
     parts = []
     for arg in expr.args:
         if isinstance(arg, (Symbol, Integer)):
@@ -12,6 +22,15 @@ def extract_parts(expr, idd=1):
     return {expr.func.__name__: parts, 'idd': idd}
 
 def build_expression(tree):
+    """
+    Rebuilds from a "tree" dictionary to a sympy parsed expression
+
+    Args:
+        tree: dictionary "tree"
+
+    Returns:
+        expr: sympy parsed expression
+    """
     items = list(tree.items())[0]
     func_name = items[0]
     func = eval(func_name)
@@ -25,6 +44,15 @@ def build_expression(tree):
     return func(*parts, evaluate=False)
 
 def get_highest_idd(tree):
+    """
+    Finds the highest depth of the dict tree
+
+    Args:
+        tree: dictionary "tree"
+
+    Returns:
+        idd: highest 'idd'(depth) in the tree
+    """
     highest_idd = tree['idd']
     if 'idd' in tree:
         highest_idd = max(highest_idd, tree['idd'])
@@ -36,6 +64,18 @@ def get_highest_idd(tree):
     return highest_idd
 
 def check_step(expr, new_expr, tree, idd):
+    """
+    wip. checks if the math step made has been useful
+
+    Args:
+        expr: the expression before the step
+        new_expr: the new expression
+        tree: dictionary "tree" (of older expression)
+        idd: max depth of tree (cant be 0)
+    
+    Returns:
+        new_expr: new sympy parsed expression with the first useful step made
+    """
     s_exp = sorted(str(expr))
     s_new_exp = sorted(str(new_expr))
     ex = expand(expr)
@@ -48,7 +88,18 @@ def check_step(expr, new_expr, tree, idd):
         new_tree = evaluate_expression(tree, idd)
         new_expr = build_expression(new_tree)
     return(new_expr)
+
 def evaluate_expression(expression, idd):
+    """
+    evaluates "tree" at depth idd
+
+    Args:
+        expression: dictionary "tree" of the expression to evaluate
+        idd: depth at which you want to evaluate
+
+    Returns:
+        expression: dictionary "tree" of the new expression
+    """
     results = []
     if idd == 0:
         return 
