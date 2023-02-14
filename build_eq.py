@@ -35,17 +35,31 @@ def get_highest_idd(tree):
     return highest_idd
 
 def check_step(expr, new_expr, tree, idd):
-    while str(new_expr) == str(expr):
+    """
+    wip. checks if the math step made has been useful
+
+    Args:
+        expr: the expression before the step
+        new_expr: the new expression
+        tree: dictionary "tree" (of older expression)
+        idd: max depth of tree (cant be 0)
+    
+    Returns:
+        new_expr: new sympy parsed expression with the first useful step made
+    """
+    s_exp = sorted(str(expr))
+    s_new_exp = sorted(str(new_expr))
+    ex = expand(expr)
+    new_ex = expand(new_expr)
+    while (s_exp == s_new_exp) and (ex == new_ex):
         idd -= 1
+        s_new_exp = sorted(str(new_expr))
         if idd == 0:
-            new_expr = expand(expr)
-            if str(new_expr) == str(expr):
-                return simplify(new_expr)
-            else:
-                return new_expr
+            return(simplify(new_expr))
         new_tree = evaluate_expression(tree, idd)
         new_expr = build_expression(new_tree)
     return(new_expr)
+
 def evaluate_expression(expression, idd):
     results = []
     if idd == 0:
@@ -80,30 +94,23 @@ def evaluate_expression(expression, idd):
                     new_expression[key] = sub_expr
             return new_expression
     return expression
+
+def eq_do_step(equ):
+    tree = extract_parts(equ, 1)
+    step_depth = get_highest_idd(tree)
+    ntree = evaluate_expression(tree, 1)
+    nequ = build_expression(ntree)
+    nequ = check_step(equ, nequ, tree, step_depth)
+    return (nequ)
+
 x = Symbol('x')
-eq = "(2*x + 3*x - 4*x**2 + 2*x**2) = -4 + 4*x"
+eq = "(2*x + 3*x - 4*x**2 + 2*x**2) * (3*x + 2) = -4 + 4*x"
 eq_cmp = eq.split("=")
 lhs = eq_cmp[0]
 rhs = eq_cmp[1]
 equ = parse_expr(f"{lhs} - ({rhs})", evaluate=False)
 print(equ)
-tree = extract_parts(equ, 1)
-mxid = get_highest_idd(tree)
-print(mxid)
-ntree = evaluate_expression(tree, 1)
-nequ = build_expression(ntree)
-nequ = check_step(equ, nequ, tree, mxid)
-equ = nequ
-tree1 = extract_parts(equ, 1)
-equ = nequ
-tree = extract_parts(equ, 1)
-mxid = get_highest_idd(tree)
-print(mxid)
-ntree = evaluate_expression(tree, 1)
-nequ = build_expression(ntree)
-nequ = check_step(equ, nequ, tree, mxid)
-equ = nequ
-tree1 = extract_parts(equ, 1)
-print(tree1 == tree)
+equ = eq_do_step(equ)
+print(equ)
+nequ = eq_do_step(equ)
 print(nequ)
-print(tree1)

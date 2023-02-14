@@ -80,7 +80,7 @@ def check_step(expr, new_expr, tree, idd):
     s_new_exp = sorted(str(new_expr))
     ex = expand(expr)
     new_ex = expand(new_expr)
-    while (s_exp == s_new_exp) & (ex == new_ex):
+    while (s_exp == s_new_exp) and (ex == new_ex):
         idd -= 1
         s_new_exp = sorted(str(new_expr))
         if idd == 0:
@@ -133,15 +133,29 @@ def evaluate_expression(expression, idd):
                     new_expression[key] = sub_expr
             return new_expression
     return expression
+
+def expr_do_step(expr):
+    """
+    function to evaluate the next step of a mathematical expression
+
+    Args:
+        expr: sympy parsed expression
+
+    Returns:
+        new_expr: new expression with next useful step done
+    """
+    tree = extract_parts(expr, 1)
+    mxid = get_highest_idd(tree)
+    ntree = evaluate_expression(tree, 1)
+    new_expr = build_expression(ntree)
+    new_expr = check_step(expr, new_expr, tree, mxid)
+    return (new_expr)
+
 x = Symbol('x')
-ex = "(2*x + 3*x - 4*x**2 + 2*x**2) * (-4 + 3*x)"
-ex1 = "x*(5 - 2*x)*(- 4 + 3*x)"
+ex = "(2*x + 3*x - 4*x**2 + 2*x**2) * (3*x -4)"
 expr = parse_expr(ex, evaluate=False)
-tree = extract_parts(expr, 1)
-print(tree)
-max_idd = get_highest_idd(tree)
-check_idd = get_highest_idd(tree)
-new_tree = evaluate_expression(tree, max_idd)
-new_expr = build_expression(new_tree)
-new_expr = check_step(expr, new_expr, tree, max_idd)
+print(expr)
+new_expr = expr_do_step(expr)
+print(new_expr)
+new_expr = expr_do_step(new_expr)
 print(new_expr)
