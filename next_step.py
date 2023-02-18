@@ -2,10 +2,17 @@ from sympy import *
 
 class AdvanceEq():
     def __init__(self, eq):
-        eq_cmp = eq.split("=")
-        lhs = eq_cmp[0]
-        rhs = eq_cmp[1]
-        self.eq = parse_expr(f"{lhs} - ({rhs})", evaluate=False)
+        self.is_eq = False
+
+        if '=' in eq:
+            self.is_eq = True
+            eq_cmp = eq.split("=")
+            lhs = eq_cmp[0]
+            rhs = eq_cmp[1]
+            eq = f"{lhs} - ({rhs})"
+
+        self.eq = parse_expr(eq, evaluate=False)
+        
         
     def extract_parts(self, eq, idd=1):
         parts = []
@@ -110,13 +117,19 @@ class AdvanceEq():
             ntree = self.evaluate_expression(tree, 1)
             nequ = self.build_expression(ntree)
             self.eq = self.check_step(nequ, tree, step_depth)
-            print(s, self.eq)
-        return self.eq
+            
+            if self.is_eq:
+                string_eq = str(self.eq) + " = 0"
+            else:
+                string_eq = str(self.eq)
+
+            print(f"\n step {s}: {string_eq}")
+        
+        return self.eq, string_eq
 
 #x = Symbol('x')
-eq = "(2*x + 3*x - 4*x**2 + 2*x**2) * (3*x + 2) = -4 + 4*x"
+eq = "(2*x + 3*x - 4*x**2 + 2*x**2) * (3*x + 2) -4 + 4*x"
 
 print(eq)
 step_solver = AdvanceEq(eq)
-new_step = step_solver.eq_do_step(2)
-print(new_step)
+new_step, string_eq = step_solver.eq_do_step(2)
