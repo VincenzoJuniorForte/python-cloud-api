@@ -125,14 +125,13 @@ def calculate(operation, step, task='expand'):
     """
 
     def solve_expression(op, step):
-        op = parse_expr(op, transformations='all')
-        step = parse_expr(step, transformations='all')
+        op = parse_expr(op, transformations='all', evaluate=False)
+        step = parse_expr(step, transformations='all', evaluate=False)
 
-        last = ''
         if task == 'expand':
             last = expand(op)
 
-        elif task == 'factor':
+        else:
             last = factor(op)
 
         is_correct = simplify(op - step) == 0

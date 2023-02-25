@@ -1,11 +1,19 @@
 from sympy import *
 
 class AdvanceEq():
-    def __init__(self, eq):
-        eq_cmp = eq.split("=")
-        lhs = eq_cmp[0]
-        rhs = eq_cmp[1]
-        self.eq = parse_expr(f"{lhs} - ({rhs})", evaluate=False)
+    def __init__(self, eq, ex_type):
+        self.ex_type = ex_type
+        self.is_eq = False
+
+        if '=' in eq:
+            self.is_eq = True
+            self.ex_type = "equation"
+            eq_cmp = eq.split("=")
+            lhs = eq_cmp[0]
+            rhs = eq_cmp[1]
+            eq = f"{lhs} - ({rhs})"
+
+        self.eq = parse_expr(eq, evaluate=False)
         
     def extract_parts(self, eq, idd=1):
         parts = []
@@ -41,6 +49,16 @@ class AdvanceEq():
                         highest_idd = max(highest_idd, self.get_highest_idd(sub_tree))
         return highest_idd
 
+    def do_last_step(self):
+        if self.ex_type == "factor":
+            return(factor(self.eq))
+        elif self.ex_type == "expand":
+            return(expand(self.eq))
+        elif self.ex_type == "equation" and degree(self.eq) == 2:
+            return(self.eq_grade_two_solve())
+        else:
+            return(solve(self.eq))
+            
     def check_step(self, new_expr, tree, idd):
         """
         wip. checks if the math step made has been useful
@@ -110,13 +128,28 @@ class AdvanceEq():
             ntree = self.evaluate_expression(tree, 1)
             nequ = self.build_expression(ntree)
             self.eq = self.check_step(nequ, tree, step_depth)
-            print(s, self.eq)
-        return self.eq
+            #print(s, self.eq)
+            if self.eq == eq:
+                self.eq = step_solver.do_last_step()
+            if self.is_eq:
+                string_eq = str(self.eq) + " = 0"
+            else:
+                string_eq = str(self.eq)
+        return self.eq, string_eq
+
+    def eq_grade_two_solve(self):
+        coeffs = Poly(self.eq).as_dict()
+        if (0,) in coeffs and (1,) in coeffs:
+            a, b, c = coeffs[(2,)], coeffs[(1,)], coeffs[(0,)]
+            return(solve(self.eq))
+        elif (0,) in coeffs:
+            return(solve(self.eq))
+        elif (1,) in coeffs:
+            self.ex_type = "factored_equ"
+            return(factor(self.eq))
 
 #x = Symbol('x')
-eq = "(2*x + 3*x - 4*x**2 + 2*x**2) * (3*x + 2) = -4 + 4*x"
+eq = "2*x + 3*x - 4*x**2 + 2*x**2 = -4 + 5*x"
 
-print(eq)
-step_solver = AdvanceEq(eq)
-new_step = step_solver.eq_do_step(2)
-print(new_step)
+step_solver = AdvanceEq(eq, "equation")
+new_step, string_eq = step_solver.eq_do_step(2)
