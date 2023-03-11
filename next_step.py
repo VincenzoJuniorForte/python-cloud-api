@@ -121,6 +121,10 @@ class AdvanceEq():
         return expression
 
     def eq_do_step(self, steps: int = 1):
+        if (str(self.eq) == "0"):
+            return("equazione indeterminata", "0")
+        if not self.eq.free_symbols:
+            return ("equazione impossibile", "imp")
         for s in range(steps):
             eq = self.eq
             tree = self.extract_parts(eq, 1)
@@ -149,7 +153,6 @@ class AdvanceEq():
             return(factor(self.eq))
 
 #x = Symbol('x')
-eq = "2*x + 3*x - 4*x**2 + 2*x**2 = -4 + 5*x"
-
+eq = "2*x + 5 * (x - 6) = x + 6 * (x + 1)"
 step_solver = AdvanceEq(eq, "equation")
-new_step, string_eq = step_solver.eq_do_step(2)
+new_step, string_eq = step_solver.eq_do_step(1)
