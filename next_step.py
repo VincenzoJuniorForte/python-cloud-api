@@ -1,8 +1,8 @@
 from sympy import *
 
 class AdvanceEq():
-    def __init__(self, eq, ex_type):
-        self.ex_type = ex_type
+    def __init__(self, eq):
+        #self.ex_type = ex_type
         self.is_eq = False
 
         if '=' in eq:
@@ -11,9 +11,13 @@ class AdvanceEq():
             eq_cmp = eq.split("=")
             lhs = eq_cmp[0]
             rhs = eq_cmp[1]
-            eq = f"{lhs} - ({rhs})"
-
-        self.eq = parse_expr(eq, evaluate=False)
+            if rhs == "0":
+                eq = f"{lhs}"
+            else:
+                eq = f"{lhs} - ({rhs})"
+        else:
+            self.ex_type = "expand"
+        self.eq = parse_expr(eq,transformations='all', evaluate=False)
         
     def extract_parts(self, eq, idd=1):
         parts = []
@@ -54,8 +58,8 @@ class AdvanceEq():
             return(factor(self.eq))
         elif self.ex_type == "expand":
             return(expand(self.eq))
-        elif self.ex_type == "equation" and degree(self.eq) == 2:
-            return(self.eq_grade_two_solve())
+       # elif self.ex_type == "equation" and degree(self.eq) == 2:
+          #  return(self.eq_grade_two_solve())
         else:
             return(solve(self.eq))
             
@@ -122,9 +126,9 @@ class AdvanceEq():
 
     def eq_do_step(self, steps: int = 1):
         if (str(self.eq) == "0"):
-            return("equazione indeterminata", "0")
+            return("equazione indeterminata", "Indeterminata")
         if not self.eq.free_symbols:
-            return ("equazione impossibile", "imp")
+            return ("equazione impossibile", "Impossibile")
         for s in range(steps):
             eq = self.eq
             tree = self.extract_parts(eq, 1)
@@ -133,8 +137,14 @@ class AdvanceEq():
             nequ = self.build_expression(ntree)
             self.eq = self.check_step(nequ, tree, step_depth)
             #print(s, self.eq)
+            if (str(self.eq) == "0"):
+               return("equazione indeterminata", "Indeterminata")
+            if not self.eq.free_symbols:
+               return ("equazione impossibile", "Impossibile")
             if self.eq == eq:
-                self.eq = step_solver.do_last_step()
+                self.eq = self.do_last_step()
+                string_eq = str(self.eq)
+                return self.eq, string_eq
             if self.is_eq:
                 string_eq = str(self.eq) + " = 0"
             else:
@@ -153,6 +163,7 @@ class AdvanceEq():
             return(factor(self.eq))
 
 #x = Symbol('x')
-eq = "2*x + 5 * (x - 6) = x + 6 * (x + 1)"
-step_solver = AdvanceEq(eq, "equation")
-new_step, string_eq = step_solver.eq_do_step(1)
+#eq = "2*x + 5 * (x - 6) = x + 6 * (x + 1)"
+#def next_step(eq)
+#step_solver = AdvanceEq(eq, "equation")
+#new_step, string_eq = step_solver.eq_do_step(1)

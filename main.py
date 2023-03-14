@@ -3,6 +3,7 @@ import uuid
 import traceback
 
 from sympy import *
+from next_step import *
 from sympy.parsing.sympy_parser import parse_expr
 import functions_framework
 from google.cloud import error_reporting
@@ -56,25 +57,26 @@ def http_handler(request):
         params = request_json
 
         if not params or not all(
-                key in params for key in ('operation', 'step', 'step_number', 'user_id', 'exercise_id')):
+                key in params for key in ('operation', 'step', 'step_number', 'user_id', 'exercise_id', 'last_correct')):
             return {'error': 'Missing params'}, 400, headers
 
         raw_solution, is_correct, is_last = calculate(params['operation'], params['step'], params.get('task', None))
         formatted_solution = str(raw_solution)
-
-        track_event(params, formatted_solution, is_correct, is_last)
+        raw_new_step, new_step = next_step(params['last_correct'])
+        track_event(params, formatted_solution, is_correct, is_last, new_step)
 
         return {
                    'solution': formatted_solution,
                    'is_correct': is_correct,
-                   'is_last': is_last
+                   'is_last': is_last,
+                   'new_step': new_step
                }, 200, headers
     except Exception as e:
         report_exception(error_reporting_client, e)
         abort(500)
 
 
-def track_event(params, formatted_solution, is_correct, is_last):
+def track_event(params, formatted_solution, is_correct, is_last, new_step):
     try:
         batch = firestore_client.batch()
         user = firestore_client.collection('users').document(params['user_id'])
@@ -86,11 +88,13 @@ def track_event(params, formatted_solution, is_correct, is_last):
                 'step': params['step'],
                 'task': params.get('task', None),
                 'step_number': params['step_number'],
+                'last_correct' :params['last_correct']
             },
             'output': {
                 'solution': formatted_solution,
                 'is_correct': is_correct,
                 'is_last': is_last,
+                'new_step': new_step,
             },
             'created_at': firestore.SERVER_TIMESTAMP,
             'updated_at': firestore.SERVER_TIMESTAMP,
@@ -108,6 +112,10 @@ def report_exception(client, exception):
         client.report_exception()
     traceback.print_exc()
 
+def next_step(step):
+    step_solver = AdvanceEq(step)
+    new_step, string_eq = step_solver.eq_do_step(1)
+    return new_step, string_eq
 
 def calculate(operation, step, task='expand'):
     """
@@ -127,7 +135,7 @@ def calculate(operation, step, task='expand'):
     def solve_expression(op, step):
         op = parse_expr(op, transformations='all', evaluate=False)
         step = parse_expr(step, transformations='all', evaluate=False)
-
+emove
         if task == 'expand':
             last = expand(op)
 
@@ -155,7 +163,7 @@ def calculate(operation, step, task='expand'):
         is_correct = solution == solution_step
         if is_correct:
             if isinstance(lhs_step, Symbol) and not rhs_step.free_symbols:
-                is_last = True
+                    is_last = True
 
         return solution, is_correct, is_last
 
@@ -163,3 +171,4 @@ def calculate(operation, step, task='expand'):
         return solve_equation(operation, step)
     else:
         return solve_expression(operation, step)
+
