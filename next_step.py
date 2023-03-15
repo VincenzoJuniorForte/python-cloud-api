@@ -4,14 +4,14 @@ class AdvanceEq():
     def __init__(self, eq):
         #self.ex_type = ex_type
         self.is_eq = False
-
+        self.msg = ""
         if '=' in eq:
             self.is_eq = True
             self.ex_type = "equation"
             eq_cmp = eq.split("=")
             lhs = eq_cmp[0]
             rhs = eq_cmp[1]
-            if rhs == "0":
+            if rhs == " 0" or rhs == "0":
                 eq = f"{lhs}"
             else:
                 eq = f"{lhs} - ({rhs})"
@@ -58,8 +58,8 @@ class AdvanceEq():
             return(factor(self.eq))
         elif self.ex_type == "expand":
             return(expand(self.eq))
-       # elif self.ex_type == "equation" and degree(self.eq) == 2:
-          #  return(self.eq_grade_two_solve())
+        elif self.ex_type == "equation" and degree(self.eq) == 2:
+            return(self.eq_grade_two_solve())
         else:
             return(solve(self.eq))
             
@@ -80,7 +80,8 @@ class AdvanceEq():
         s_new_exp = sorted(str(new_expr))
         ex = expand(self.eq)
         new_ex = expand(new_expr)
-        while (s_exp == s_new_exp) and (ex == new_ex):
+        #and (ex == new_ex)
+        while (s_exp == s_new_exp) :
             idd -= 1
             s_new_exp = sorted(str(new_expr))
             if idd == 0:
@@ -136,14 +137,13 @@ class AdvanceEq():
             ntree = self.evaluate_expression(tree, 1)
             nequ = self.build_expression(ntree)
             self.eq = self.check_step(nequ, tree, step_depth)
-            #print(s, self.eq)
             if (str(self.eq) == "0"):
                return("equazione indeterminata", "Indeterminata")
             if not self.eq.free_symbols:
                return ("equazione impossibile", "Impossibile")
-            if self.eq == eq:
+            if str(self.eq) == str(eq):
                 self.eq = self.do_last_step()
-                string_eq = str(self.eq)
+                string_eq = self.msg + str(self.eq)
                 return self.eq, string_eq
             if self.is_eq:
                 string_eq = str(self.eq) + " = 0"
@@ -154,16 +154,19 @@ class AdvanceEq():
     def eq_grade_two_solve(self):
         coeffs = Poly(self.eq).as_dict()
         if (0,) in coeffs and (1,) in coeffs:
+            self.msg = "Applicare la formula.."
             a, b, c = coeffs[(2,)], coeffs[(1,)], coeffs[(0,)]
             return(solve(self.eq))
         elif (0,) in coeffs:
             return(solve(self.eq))
         elif (1,) in coeffs:
+            self.msg = ""
             self.ex_type = "factored_equ"
-            return(factor(self.eq))
+            return(solve(self.eq))
 
 #x = Symbol('x')
-#eq = "2*x + 5 * (x - 6) = x + 6 * (x + 1)"
-#def next_step(eq)
-#step_solver = AdvanceEq(eq, "equation")
+#eq = "(9*x - 2)* 1/4 = 0"
+#eq = "x^2 + 2/3x = 0"
+#step_solver = AdvanceEq(eq)
 #new_step, string_eq = step_solver.eq_do_step(1)
+#print(string_eq)
