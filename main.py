@@ -156,7 +156,7 @@ def calculate(operation, step, task='expand'):
         solution = solve(lhs - rhs)
 
         step_cmp = step.split("=")
-        lhs_step = parse_expr(step_cmp[0], transformations='all')
+        lhs_step = parse_expr(step_cmp[0], transformations='all', evaluate=False)
         rhs_step = parse_expr(step_cmp[1], transformations='all')
         solution_step = solve(lhs_step - rhs_step)
 
