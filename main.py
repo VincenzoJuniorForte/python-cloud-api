@@ -157,12 +157,13 @@ def calculate(operation, step, task='expand'):
 
         step_cmp = step.split("=")
         lhs_step = parse_expr(step_cmp[0], transformations='all', evaluate=False)
-        rhs_step = parse_expr(step_cmp[1], transformations='all')
+        rhs_step = parse_expr(step_cmp[1], transformations='all', evaluate=False)
         solution_step = solve(lhs_step - rhs_step)
 
         is_correct = solution == solution_step
         if is_correct:
             if isinstance(lhs_step, Symbol) and not rhs_step.free_symbols:
+                if str(rhs_step) == str(simplify(rhs_step)):
                     is_last = True
 
         return solution, is_correct, is_last
