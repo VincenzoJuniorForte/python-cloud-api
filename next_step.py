@@ -4,6 +4,7 @@ class AdvanceEq():
     def __init__(self, eq):
         #self.ex_type = ex_type
         self.is_eq = False
+        self.flag = False
         self.msg = ""
         if '=' in eq:
             self.is_eq = True
@@ -36,6 +37,9 @@ class AdvanceEq():
         args = items[1]
         parts = []
         for arg in args:
+            elem = args
+            if (elem[0] == -1 and isinstance(elem[1], (int, Integer))):
+                self.flag = True
             if isinstance(arg, dict):
                 parts.append(self.build_expression(arg))
             else:
@@ -66,7 +70,6 @@ class AdvanceEq():
     def check_step(self, new_expr, tree, idd):
         """
         wip. checks if the math step made has been useful
-
         Args:
             expr: the expression before the step
             new_expr: the new expression
@@ -130,11 +133,14 @@ class AdvanceEq():
             return("equazione indeterminata", "Indeterminata")
         if not self.eq.free_symbols:
             return ("equazione impossibile", "Impossibile")
+        print(f"equazione in ingresso: {self.eq}")
         for s in range(steps):
             eq = self.eq
             tree = self.extract_parts(eq, 1)
+            #print(f"Albero:{tree}")
             step_depth = self.get_highest_idd(tree)
             ntree = self.evaluate_expression(tree, 1)
+            #print(f"Nuovo albero:{ntree}")
             nequ = self.build_expression(ntree)
             self.eq = self.check_step(nequ, tree, step_depth)
             if (str(self.eq) == "0"):
@@ -149,6 +155,9 @@ class AdvanceEq():
                 string_eq = str(self.eq) + " = 0"
             else:
                 string_eq = str(self.eq)
+            if self.flag:
+                self.flag = False
+                return(self.eq_do_step(1))
         return self.eq, string_eq
 
     def eq_grade_two_solve(self):
@@ -164,9 +173,12 @@ class AdvanceEq():
             self.ex_type = "factored_equ"
             return(solve(self.eq))
 
+#problema pow
 #x = Symbol('x')
-#eq = "(9*x - 2)* 1/4 = 0"
-#eq = "x^2 + 2/3x = 0"
+#eq = "-5x^2 + 4x + 5x - 3 = 0"
+#eq = "(9x -2)/4 = 0"
 #step_solver = AdvanceEq(eq)
+#new_step, string_eq = step_solver.eq_do_step(1)
+#print(string_eq)
 #new_step, string_eq = step_solver.eq_do_step(1)
 #print(string_eq)
