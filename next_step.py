@@ -19,6 +19,7 @@ class AdvanceEq():
         else:
             self.ex_type = "expand"
         self.eq = parse_expr(eq,transformations='all', evaluate=False)
+        # print(self.eq)
         
     def extract_parts(self, eq, idd=1):
         parts = []
@@ -38,7 +39,8 @@ class AdvanceEq():
         parts = []
         for arg in args:
             elem = args
-            if (elem[0] == -1 and isinstance(elem[1], (int, Integer)) or (elem[1] == -1 and isinstance(elem[0], (int, Integer)))):
+            if (elem[0] == -1 and isinstance(elem[1], (int, Integer)) or
+                (elem[1] == -1 and isinstance(elem[0], (int, Integer)))):
                 self.flag = True
             if isinstance(arg, dict):
                 parts.append(self.build_expression(arg))
@@ -155,15 +157,16 @@ class AdvanceEq():
                 string_eq = str(self.eq) + " = 0"
             else:
                 string_eq = str(self.eq)
+            print(f"next step: {string_eq}")
             if self.flag:
                 self.flag = False
-                return(self.eq_do_step(1))
+                return(self.eq_do_step(steps))
         return self.eq, string_eq
 
     def eq_grade_two_solve(self):
         coeffs = Poly(self.eq).as_dict()
         if (0,) in coeffs and (1,) in coeffs:
-            self.msg = "Applicare la formula.."
+            self.msg = ""
             a, b, c = coeffs[(2,)], coeffs[(1,)], coeffs[(0,)]
             return(solve(self.eq))
         elif (0,) in coeffs:
@@ -174,11 +177,11 @@ class AdvanceEq():
             return(solve(self.eq))
 
 #problema pow
-#x = Symbol('x')
-#eq = "-5x^2 + 4x + 5x - 3 = 0"
+# x = Symbol('x')
+# eq = "((-5x^2 + 4x + 5x)(x+1) - 3(x+2))(x-1)"
 #eq = "(9x -2)/4 = 0"
-#step_solver = AdvanceEq(eq)
-#new_step, string_eq = step_solver.eq_do_step(1)
-#print(string_eq)
+# step_solver = AdvanceEq(eq)
+# new_step, string_eq = step_solver.eq_do_step(4)
+# print(string_eq)
 #new_step, string_eq = step_solver.eq_do_step(1)
 #print(string_eq)
