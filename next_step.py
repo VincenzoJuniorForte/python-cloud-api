@@ -135,7 +135,7 @@ class AdvanceEq():
             return("equazione indeterminata", "Indeterminata")
         if not self.eq.free_symbols:
             return ("equazione impossibile", "Impossibile")
-        print(f"equazione in ingresso: {self.eq}")
+       #print(f"equazione in ingresso: {self.eq}")
         for s in range(steps):
             eq = self.eq
             tree = self.extract_parts(eq, 1)
@@ -157,7 +157,7 @@ class AdvanceEq():
                 string_eq = str(self.eq) + " = 0"
             else:
                 string_eq = str(self.eq)
-            print(f"next step: {string_eq}")
+            #print(f"next step: {string_eq}")
             if self.flag:
                 self.flag = False
                 return(self.eq_do_step(steps))
@@ -177,11 +177,11 @@ class AdvanceEq():
             return(solve(self.eq))
 
 #problema pow
-# x = Symbol('x')
-# eq = "((-5x^2 + 4x + 5x)(x+1) - 3(x+2))(x-1)"
+#x = Symbol('x')
+#eq = "((-5x^2 + 4x + 5x)(x+1) - 3(x+2))(x-1)"
 #eq = "(9x -2)/4 = 0"
-# step_solver = AdvanceEq(eq)
-# new_step, string_eq = step_solver.eq_do_step(4)
+#step_solver = AdvanceEq(eq)
+#, string_eq = step_solver.eq_do_step(4)
 # print(string_eq)
 #new_step, string_eq = step_solver.eq_do_step(1)
-#print(string_eq)
+#(string_eq)
