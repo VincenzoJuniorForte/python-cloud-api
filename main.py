@@ -3,7 +3,7 @@ import uuid
 import traceback
 
 from sympy import *
-from next_step import *
+from next_step import AdvanceEq
 from sympy.parsing.sympy_parser import parse_expr
 import functions_framework
 from google.cloud import error_reporting
