@@ -5,6 +5,10 @@ class AdvanceEq():
         #self.ex_type = ex_type
         self.is_eq = False
         self.flag = False
+        self.step_done = False
+        self.op_done = None
+        self.val_used = None
+        self.first_step = False
         self.msg = ""
         if '=' in eq:
             self.is_eq = True
@@ -16,6 +20,7 @@ class AdvanceEq():
                 eq = f"{lhs}"
             else:
                 eq = f"{lhs} - ({rhs})"
+                self.first_step = True
         else:
             self.ex_type = "expand"
         self.eq = parse_expr(eq,transformations='all', evaluate=False)
@@ -26,6 +31,8 @@ class AdvanceEq():
         for arg in eq.args:
             if isinstance(arg, (Symbol, Integer)):
                 parts.append(arg)
+            elif isinstance(arg, Rational):
+                parts.append({'numerator': arg.p, 'denominator': arg.q, 'idd': idd})
             elif hasattr(arg, 'args'):
                 sub_expr = self.extract_parts(arg, (idd + 1))
                 parts.append(sub_expr)
@@ -39,15 +46,18 @@ class AdvanceEq():
         parts = []
         for arg in args:
             elem = args
-            if (elem[0] == -1 and isinstance(elem[1], (int, Integer)) or
-                (elem[1] == -1 and isinstance(elem[0], (int, Integer)))):
-                self.flag = True
-            if isinstance(arg, dict):
+            if(len(elem) > 1 and isinstance(elem, list)):
+                if (elem[0] == -1 and isinstance(elem[1], (int, Integer)) or
+                    (elem[1] == -1 and isinstance(elem[0], (int, Integer)))):
+                    self.flag = True
+            if isinstance(arg, dict) and 'numerator' in arg and 'denominator' in arg:
+                parts.append(Rational(arg['numerator'], arg['denominator']))
+            elif isinstance(arg, dict):
                 parts.append(self.build_expression(arg))
             else:
                 parts.append(arg)
         return func(*parts, evaluate=False)
-
+    
     def get_highest_idd(self, tree):
         highest_idd = tree['idd']
         if 'idd' in tree:
@@ -64,29 +74,16 @@ class AdvanceEq():
             return(factor(self.eq))
         elif self.ex_type == "expand":
             return(expand(self.eq))
-        elif self.ex_type == "equation" and degree(self.eq) == 2:
-            return(self.eq_grade_two_solve())
+        #elif self.ex_type == "equation" and degree(self.eq) == 2:
+        #    return(self.eq_grade_two_solve())
         else:
             return(solve(self.eq))
-            
+
     def check_step(self, new_expr, tree, idd):
-        """
-        wip. checks if the math step made has been useful
-        Args:
-            expr: the expression before the step
-            new_expr: the new expression
-            tree: dictionary "tree" (of older expression)
-            idd: max depth of tree (cant be 0)
-        
-        Returns:
-            new_expr: new sympy parsed expression with the first useful step made
-        """
         s_exp = sorted(str(self.eq))
         s_new_exp = sorted(str(new_expr))
-        ex = expand(self.eq)
-        new_ex = expand(new_expr)
-        #and (ex == new_ex)
-        while (s_exp == s_new_exp) :
+
+        while (s_exp == s_new_exp) and not self.step_done:
             idd -= 1
             s_new_exp = sorted(str(new_expr))
             if idd == 0:
@@ -96,54 +93,55 @@ class AdvanceEq():
         return(new_expr)
 
     def evaluate_expression(self, expression, idd):
-        results = []
-        if idd == 0:
-            return 
+        if idd == 0 or self.step_done:
+            return expression
+
         if isinstance(expression, dict):
-            if expression['idd'] == idd:
-                operation = list(expression.keys())[0]
-                values = expression[operation]
-                results = []
-                for value in values:
-                    if isinstance(value, dict):
+            operation = list(expression.keys())[0]
+            values = expression[operation]
+            new_values = []
+            for value in values:
+                if isinstance(value, dict):
+                    if value['idd'] == idd and not self.step_done:
+                        operation_at_idd = list(value.keys())[0]
+                        #print("Operation at idd:", operation_at_idd)
+                        self.op_done = operation_at_idd
                         value = self.build_expression(value)
-                        results.append(simplify(value))
+                        #print("valore usato: ", value)
+                        self.val_used = value
+                        new_value = simplify(value)
+                        #print("valore nuovo: ", new_value)
+                        #print(f"valore vecchio: {value} valore nuovo: {new_value} check cambio: {str(value) != str(new_value)}")
+                        if(str(value) != str(new_value)):
+                            #print("è cambiato")
+                            self.step_done = True
                     else:
-                        results.append(value)
-                return {operation: results}
-            else:
-                new_expression = {}
-                for key, sub_expr in expression.items():
-                    if isinstance(sub_expr, list):
-                        new_sub_expr = []
-                        for value in sub_expr:
-                            if type(value) == dict:
-                                evaluated_value = self.evaluate_expression(value, idd)
-                                if evaluated_value:
-                                    new_sub_expr.append(evaluated_value)
-                            else:
-                                new_sub_expr.append(value)
-                        if new_sub_expr:
-                            new_expression[key] = new_sub_expr
-                    else:
-                        new_expression[key] = sub_expr
-                return new_expression
+                        new_value = self.evaluate_expression(value, idd)
+                    new_values.append(new_value)
+                else:
+                    new_values.append(value)
+            new_expression = {operation: new_values, 'idd': expression['idd']}
+            return new_expression
         return expression
 
     def eq_do_step(self, steps: int = 1):
         if (str(self.eq) == "0"):
-            return("equazione indeterminata", "Indeterminata")
+            return("equazione indeterminata", "Indeterminata", self.op_done, self.val_used)
         if not self.eq.free_symbols:
-            return ("equazione impossibile", "Impossibile")
-       #print(f"equazione in ingresso: {self.eq}")
+            return ("equazione impossibile", "Impossibile", self.op_done, self.val_used)
+        if self.first_step:
+            self.first_step = False
+            string_eq = str(self.eq) + " = 0"
+            return(self.eq, string_eq, self.op_done, self.val_used)
         for s in range(steps):
             eq = self.eq
             tree = self.extract_parts(eq, 1)
             #print(f"Albero:{tree}")
             step_depth = self.get_highest_idd(tree)
-            ntree = self.evaluate_expression(tree, 1)
-            #print(f"Nuovo albero:{ntree}")
+            #print("depth: ", step_depth)
+            ntree = self.evaluate_expression(tree, step_depth)
             nequ = self.build_expression(ntree)
+            #print(f"next step: {nequ}")
             self.eq = self.check_step(nequ, tree, step_depth)
             if (str(self.eq) == "0"):
                return("equazione indeterminata", "Indeterminata")
@@ -152,16 +150,18 @@ class AdvanceEq():
             if str(self.eq) == str(eq):
                 self.eq = self.do_last_step()
                 string_eq = self.msg + str(self.eq)
-                return self.eq, string_eq
+                return self.eq, string_eq, self.op_done, self.val_used
             if self.is_eq:
                 string_eq = str(self.eq) + " = 0"
             else:
                 string_eq = str(self.eq)
             #print(f"next step: {string_eq}")
-            if self.flag:
+            #print(self.flag)
+            if self.flag and not self.step_done:
                 self.flag = False
                 return(self.eq_do_step(steps))
-        return self.eq, string_eq
+            self.step_done = False
+        return self.eq, string_eq, self.op_done, self.val_used
 
     def eq_grade_two_solve(self):
         coeffs = Poly(self.eq).as_dict()
@@ -177,11 +177,15 @@ class AdvanceEq():
             return(solve(self.eq))
 
 #problema pow
-#x = Symbol('x')
+x = Symbol('x')
 #eq = "((-5x^2 + 4x + 5x)(x+1) - 3(x+2))(x-1)"
-#eq = "(9x -2)/4 = 0"
-#step_solver = AdvanceEq(eq)
-#, string_eq = step_solver.eq_do_step(4)
-# print(string_eq)
-#new_step, string_eq = step_solver.eq_do_step(1)
-#(string_eq)
+#eq = "10x - 150x  - 3 = 0"
+#eq = "9*x/4 + 1/2 = 0" #problema *1* all infinito
+eq = "8(x + 3) + 6(2x + 1) + (4(4x + 2) + 2(6x +7)) = 0"
+step_solver = AdvanceEq(eq)
+#new_step, string_eq = step_solver.eq_do_step(4)
+#print(string_eq)
+new_step, string_eq, op_done, val_used = step_solver.eq_do_step(1)
+print(string_eq)
+print("operazione fattissima: ", op_done)
+print("valore usatissimo: ", val_used)
