@@ -87,6 +87,8 @@ class AdvanceEq():
             idd -= 1
             s_new_exp = sorted(str(new_expr))
             if idd == 0:
+                #print("non è cambiato")
+                #print("expr: ", new_expr)
                 return(simplify(new_expr))
             new_tree = self.evaluate_expression(tree, idd)
             new_expr = self.build_expression(new_tree)
@@ -157,8 +159,9 @@ class AdvanceEq():
                 string_eq = str(self.eq)
             #print(f"next step: {string_eq}")
             #print(self.flag)
-            if self.flag and not self.step_done:
+            if self.flag:
                 self.flag = False
+                self.step_done = False
                 return(self.eq_do_step(steps))
             self.step_done = False
         return self.eq, string_eq, self.op_done, self.val_used
@@ -179,9 +182,9 @@ class AdvanceEq():
 #problema pow
 x = Symbol('x')
 #eq = "((-5x^2 + 4x + 5x)(x+1) - 3(x+2))(x-1)"
-#eq = "10x - 150x  - 3 = 0"
+eq = "10x - 150x  - 3 = 0"
 #eq = "9*x/4 + 1/2 = 0" #problema *1* all infinito
-eq = "8(x + 3) + 6(2x + 1) + (4(4x + 2) + 2(6x +7)) = 0"
+#eq = "8(x + 3) + 6(2x + 1) + (4(4x + 2) + 2(6x +7)) = 0"
 step_solver = AdvanceEq(eq)
 #new_step, string_eq = step_solver.eq_do_step(4)
 #print(string_eq)
