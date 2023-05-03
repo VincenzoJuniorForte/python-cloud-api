@@ -138,13 +138,13 @@ class AdvanceEq():
 
     def eq_do_step(self, steps: int = 1):
         if (str(self.eq) == "0"):
-            return("equazione indeterminata", "Indeterminata", self.op_done, self.val_used)
+            return("equazione indeterminata", "Indeterminata", self.op_done, str(self.val_used))
         if not self.eq.free_symbols:
-            return ("equazione impossibile", "Impossibile", self.op_done, self.val_used)
+            return ("equazione impossibile", "Impossibile", self.op_done, str(self.val_used))
         if self.first_step:
             self.first_step = False
             string_eq = str(self.eq) + " = 0"
-            return(self.eq, string_eq, self.op_done, self.val_used)
+            return(self.eq, string_eq, self.op_done, str(self.val_used))
         for s in range(steps):
             eq = self.eq
             tree = self.extract_parts(eq, 1)
@@ -161,7 +161,7 @@ class AdvanceEq():
             if str(self.eq) == str(eq):
                 self.eq = self.do_last_step()
                 string_eq = self.msg + str(self.eq)
-                return self.eq, string_eq, self.op_done, self.val_used
+                return self.eq, string_eq, self.op_done, str(self.val_used)
             if self.is_eq:
                 string_eq = str(self.eq) + " = 0"
             else:
@@ -173,7 +173,7 @@ class AdvanceEq():
                 self.step_done = False
                 return(self.eq_do_step(steps))
             self.step_done = False
-        return self.eq, string_eq, self.op_done, self.val_used
+        return self.eq, string_eq, self.op_done, str(self.val_used)
 
     def eq_grade_two_solve(self):
         coeffs = Poly(self.eq).as_dict()
