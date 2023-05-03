@@ -39,6 +39,7 @@ class AdvanceEq():
         return {eq.func.__name__: parts, 'idd': idd}
 
     def build_expression(self, tree):
+        set_keys = {'numerator', 'denominator', 'idd'}
         items = list(tree.items())[0]
         func_name = items[0]
         func = eval(func_name)
@@ -50,6 +51,12 @@ class AdvanceEq():
                 if (elem[0] == -1 and isinstance(elem[1], (int, Integer)) or
                     (elem[1] == -1 and isinstance(elem[0], (int, Integer)))):
                     self.flag = True
+                elif (elem[0] == 1 and isinstance(elem[1], (dict))):
+                    if set(elem[1].keys()) == set_keys:
+                        self.flag = True
+                elif(elem[1] == 1 and isinstance(elem[0], (dict))):
+                    if set(elem[0].keys()) == set_keys:
+                        self.flag = True
             if isinstance(arg, dict) and 'numerator' in arg and 'denominator' in arg:
                 parts.append(Rational(arg['numerator'], arg['denominator']))
             elif isinstance(arg, dict):
@@ -103,7 +110,10 @@ class AdvanceEq():
             values = expression[operation]
             new_values = []
             for value in values:
-                if isinstance(value, dict):
+                if isinstance(value, dict) and 'numerator' in value and 'denominator' in value:
+                    frac = Rational(value['numerator'], value['denominator'])
+                    new_values.append(frac)
+                elif isinstance(value, dict):
                     if value['idd'] == idd and not self.step_done:
                         operation_at_idd = list(value.keys())[0]
                         #print("Operation at idd:", operation_at_idd)
@@ -143,7 +153,6 @@ class AdvanceEq():
             #print("depth: ", step_depth)
             ntree = self.evaluate_expression(tree, step_depth)
             nequ = self.build_expression(ntree)
-            #print(f"next step: {nequ}")
             self.eq = self.check_step(nequ, tree, step_depth)
             if (str(self.eq) == "0"):
                return("equazione indeterminata", "Indeterminata")
@@ -180,15 +189,17 @@ class AdvanceEq():
             return(solve(self.eq))
 
 #problema pow
-x = Symbol('x')
-#eq = "((-5x^2 + 4x + 5x)(x+1) - 3(x+2))(x-1)"
-eq = "10x - 150x  - 3 = 0"
-#eq = "9*x/4 + 1/2 = 0" #problema *1* all infinito
+#x = Symbol('x')
+#eq = "((-5x^2 + 4x + 5x)(x+1) - 3(x+2))" #caso particolare: -5*x**2 + 4*x + 5*x sympy raccoglie la x, estrazione operazioni incompleta
+#eq = "-x*(x + 1)*(5*x - 9) - (3*x + 6)" #problema loop
+#eq = "10x - 150x  - 3 = 0"
+#eq = "2x + 3x +5 + 3x + 4 = 0"
+#eq = "9*x/4 + 1/2 = 0" #problema *1* all infinito (sembra risolto, da testare)
 #eq = "8(x + 3) + 6(2x + 1) + (4(4x + 2) + 2(6x +7)) = 0"
-step_solver = AdvanceEq(eq)
-#new_step, string_eq = step_solver.eq_do_step(4)
+#step_solver = AdvanceEq(eq)
+#new_step, string_eq, op_done, val_used = step_solver.eq_do_step(1)
 #print(string_eq)
-new_step, string_eq, op_done, val_used = step_solver.eq_do_step(1)
-print(string_eq)
-print("operazione fattissima: ", op_done)
-print("valore usatissimo: ", val_used)
+#print("operazione fattissima: ", op_done)
+#print("valore usatissimo: ", val_used)
+# potenzialmente da migliorare la creazione dell'albero. es: ignorare moltiplicazione tra valore e simbolo lasciandola già svolta. 
+# valutare di tenere ogni addizione come operazione separata.

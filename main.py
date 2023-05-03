@@ -62,21 +62,23 @@ def http_handler(request):
 
         raw_solution, is_correct, is_last = calculate(params['operation'], params['step'], params.get('task', None))
         formatted_solution = str(raw_solution)
-        raw_new_step, new_step = next_step(params['last_correct'])
-        track_event(params, formatted_solution, is_correct, is_last, new_step)
+        raw_new_step, new_step, op_done, val_used = next_step(params['last_correct'])
+        track_event(params, formatted_solution, is_correct, is_last, new_step, op_done, val_used)
 
         return {
                    'solution': formatted_solution,
                    'is_correct': is_correct,
                    'is_last': is_last,
-                   'new_step': new_step
+                   'new_step': new_step,
+                   'op_done': op_done,
+                   'val_used': val_used
                }, 200, headers
     except Exception as e:
         report_exception(error_reporting_client, e)
         abort(500)
 
 
-def track_event(params, formatted_solution, is_correct, is_last, new_step):
+def track_event(params, formatted_solution, is_correct, is_last, new_step, op_done, val_used):
     try:
         batch = firestore_client.batch()
         user = firestore_client.collection('users').document(params['user_id'])
@@ -95,6 +97,8 @@ def track_event(params, formatted_solution, is_correct, is_last, new_step):
                 'is_correct': is_correct,
                 'is_last': is_last,
                 'new_step': new_step,
+                'op_done': op_done,
+                'val_used': val_used
             },
             'created_at': firestore.SERVER_TIMESTAMP,
             'updated_at': firestore.SERVER_TIMESTAMP,
@@ -114,8 +118,8 @@ def report_exception(client, exception):
 
 def next_step(step):
     step_solver = AdvanceEq(step)
-    new_step, string_eq = step_solver.eq_do_step(1)
-    return new_step, string_eq
+    new_step, string_eq, op_done, val_used = step_solver.eq_do_step(1)
+    return new_step, string_eq, op_done, val_used
 
 def calculate(operation, step, task='expand'):
     """
