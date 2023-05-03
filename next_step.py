@@ -155,12 +155,12 @@ class AdvanceEq():
             nequ = self.build_expression(ntree)
             self.eq = self.check_step(nequ, tree, step_depth)
             if (str(self.eq) == "0"):
-               return("equazione indeterminata", "Indeterminata")
+               return("equazione indeterminata", "Indeterminata", self.op_done, str(self.val_used))
             if not self.eq.free_symbols:
-               return ("equazione impossibile", "Impossibile")
+               return ("equazione impossibile", "Impossibile", self.op_done, str(self.val_used))
             if str(self.eq) == str(eq):
                 self.eq = self.do_last_step()
-                string_eq = self.msg + str(self.eq)
+                string_eq = str(self.eq)
                 return self.eq, string_eq, self.op_done, str(self.val_used)
             if self.is_eq:
                 string_eq = str(self.eq) + " = 0"
@@ -178,13 +178,11 @@ class AdvanceEq():
     def eq_grade_two_solve(self):
         coeffs = Poly(self.eq).as_dict()
         if (0,) in coeffs and (1,) in coeffs:
-            self.msg = ""
             a, b, c = coeffs[(2,)], coeffs[(1,)], coeffs[(0,)]
             return(solve(self.eq))
         elif (0,) in coeffs:
             return(solve(self.eq))
         elif (1,) in coeffs:
-            self.msg = ""
             self.ex_type = "factored_equ"
             return(solve(self.eq))
 
