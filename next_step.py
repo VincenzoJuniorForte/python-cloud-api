@@ -144,6 +144,7 @@ class AdvanceEq():
         if self.first_step:
             self.first_step = False
             string_eq = str(self.eq) + " = 0"
+            string_eq = self.format_replace(string_eq)
             return(self.eq, string_eq, self.op_done, str(self.val_used))
         for s in range(steps):
             eq = self.eq
@@ -161,11 +162,14 @@ class AdvanceEq():
             if str(self.eq) == str(eq):
                 self.eq = self.do_last_step()
                 string_eq = str(self.eq)
+                string_eq = self.format_replace(string_eq)
                 return self.eq, string_eq, self.op_done, str(self.val_used)
             if self.is_eq:
                 string_eq = str(self.eq) + " = 0"
+                string_eq = self.format_replace(string_eq)
             else:
                 string_eq = str(self.eq)
+                string_eq = self.format_replace(string_eq)
             #print(f"next step: {string_eq}")
             #print(self.flag)
             if self.flag:
@@ -186,6 +190,18 @@ class AdvanceEq():
             self.ex_type = "factored_equ"
             return(solve(self.eq))
 
+    def format_replace(self, string_eq):
+        for i in range(len(string_eq) - 1):
+            if string_eq[i] == "*":
+                print (string_eq[i-1], string_eq[i+1])
+                if i > 0 and i < (len(string_eq) - 1) and string_eq[i-1].isnumeric() and string_eq[i+1].isalpha():
+                    string_eq = string_eq[:i] + " " + string_eq[i + 1:]
+        return string_eq
+                
+                
+                     
+
+
 #problema pow
 #x = Symbol('x')
 #eq = "((-5x^2 + 4x + 5x)(x+1) - 3(x+2))" #caso particolare: -5*x**2 + 4*x + 5*x sympy raccoglie la x, estrazione operazioni incompleta
@@ -193,10 +209,10 @@ class AdvanceEq():
 #eq = "10x - 150x  - 3 = 0"
 #eq = "2x + 3x +5 + 3x + 4 = 0"
 #eq = "9*x/4 + 1/2 = 0" #problema *1* all infinito (sembra risolto, da testare)
-#eq = "8(x + 3) + 6(2x + 1) + (4(4x + 2) + 2(6x +7)) = 0"
-#step_solver = AdvanceEq(eq)
-#new_step, string_eq, op_done, val_used = step_solver.eq_do_step(1)
-#print(string_eq)
+eq = "8(x + 3) + 6(2x + 1) + (4(4x + 2) + 2(6x +7)) = 0"
+step_solver = AdvanceEq(eq)
+new_step, string_eq, op_done, val_used = step_solver.eq_do_step(1)
+print(string_eq)
 #print("operazione fattissima: ", op_done)
 #print("valore usatissimo: ", val_used)
 # potenzialmente da migliorare la creazione dell'albero. es: ignorare moltiplicazione tra valore e simbolo lasciandola già svolta. 
