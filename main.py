@@ -60,13 +60,17 @@ def http_handler(request):
                 key in params for key in ('operation', 'step', 'step_number', 'user_id', 'exercise_id', 'last_correct')):
             return {'error': 'Missing params'}, 400, headers
 
-        raw_solution, is_correct, is_last = calculate(params['operation'], params['step'], params.get('task', None))
-        formatted_solution = str(raw_solution)
+        raw_solution, is_correct, is_last = calculate(params['operation'], params['step'],params['last_correct'], params.get('task', None))
+        formatted_solution1 = str(raw_solution)
+        # if (len(raw_solution) > 1):
+        #     formatted_solution2 = str(raw_solution[1])
+        # else:
+        #     formatted_solution2 = None
         raw_new_step, new_step, op_done, val_used = next_step(params['last_correct'])
-        track_event(params, formatted_solution, is_correct, is_last, new_step, op_done, val_used)
+        track_event(params, formatted_solution1, is_correct, is_last, new_step, op_done, val_used)
 
         return {
-                   'solution': formatted_solution,
+                   'solution': formatted_solution1,
                    'is_correct': is_correct,
                    'is_last': is_last,
                    'new_step': new_step,
@@ -78,7 +82,7 @@ def http_handler(request):
         abort(500)
 
 
-def track_event(params, formatted_solution, is_correct, is_last, new_step, op_done, val_used):
+def track_event(params, formatted_solution1, is_correct, is_last, new_step, op_done, val_used):
     try:
         batch = firestore_client.batch()
         user = firestore_client.collection('users').document(params['user_id'])
@@ -93,7 +97,7 @@ def track_event(params, formatted_solution, is_correct, is_last, new_step, op_do
                 'last_correct' :params['last_correct']
             },
             'output': {
-                'solution': formatted_solution,
+                'solution': formatted_solution1,
                 'is_correct': is_correct,
                 'is_last': is_last,
                 'new_step': new_step,
@@ -121,7 +125,7 @@ def next_step(step):
     new_step, string_eq, op_done, val_used = step_solver.eq_do_step(1)
     return new_step, string_eq, op_done, val_used
 
-def calculate(operation, step, task='expand'):
+def calculate(operation, step, lastCorrect, task='expand'):
     """
     Function to evaluate single step of mathematical expressions or equations
 
@@ -147,13 +151,16 @@ def calculate(operation, step, task='expand'):
             last = factor(op)
 
         is_correct = simplify(op - step) == 0
-        is_last = step == last
+        is_last = str(step) == str(last)
+        #is_last = simplify(step - last) == 0
 
         return last, is_correct, is_last
 
-    def solve_equation(eq, step):
+    def solve_equation(eq, step, lastCorrect):
         is_last = False
-
+        
+        if step.count("=") > 1:
+            return check_solution(lastCorrect, step)
         eq_cmp = eq.split("=")
         lhs = parse_expr(eq_cmp[0], transformations='all')
         rhs = parse_expr(eq_cmp[1], transformations='all')
@@ -165,15 +172,33 @@ def calculate(operation, step, task='expand'):
         solution_step = solve(lhs_step - rhs_step)
 
         is_correct = solution == solution_step
+        
         if is_correct:
             if isinstance(lhs_step, Symbol) and not rhs_step.free_symbols:
                 if str(rhs_step) == str(simplify(rhs_step)):
                     is_last = True
-
+        # if is_last:
+        #     is_correct = check_solution(solution, step)
+            
         return solution, is_correct, is_last
 
+    def check_solution(solution, step):
+        step_cmp = step.split(",")
+        sol1 = step_cmp[0].split("=")
+        sol2 = step_cmp[1].split("=")
+        eq_cmp = lastCorrect.split("=")
+        lhs = parse_expr(eq_cmp[0], transformations='all')
+        rhs = parse_expr(eq_cmp[1], transformations='all')
+        solution = solve(lhs - rhs)
+        if str(solution[0]) == str(sol1[1]) and str(solution[1]) == str(sol2[1]):
+            return solution, True, True
+        elif str(solution[0]) == str(sol2[1]) and str(solution[1]) == str(sol1[1]):
+            return solution, True, True
+        else:
+            return solution, False, False
+
     if '=' in operation:
-        return solve_equation(operation, step)
+        return solve_equation(operation, step, lastCorrect)
     else:
         return solve_expression(operation, step)
 

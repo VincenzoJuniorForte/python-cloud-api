@@ -193,11 +193,32 @@ class AdvanceEq():
     def format_replace(self, string_eq):
         for i in range(len(string_eq) - 1):
             if string_eq[i] == "*":
-                print (string_eq[i-1], string_eq[i+1])
                 if i > 0 and i < (len(string_eq) - 1) and string_eq[i-1].isnumeric() and string_eq[i+1].isalpha():
                     string_eq = string_eq[:i] + " " + string_eq[i + 1:]
+        j = string_eq.find(" - 1*")
+        if j != -1:
+            string_eq = string_eq[:j] + "-" + string_eq[j + 5:]
+        if string_eq[0] =="[" and string_eq[len(string_eq) - 1] == "]":
+            string_eq = self.transform_string(string_eq)
         return string_eq
-                
+    
+    def transform_string(self, input_string):
+        elements = input_string.replace('[', '').replace(']', '').split(',')
+
+        elements = [element.strip() for element in elements]
+        
+        substrings = ["x\u2081", "x\u2082", "x\u2083", "x\u2084"]
+        transformed_string = ""
+        for i, element in enumerate(elements):
+            j = element.find("sqrt")
+            if j != -1:
+                element = element[:j] + "√" + element[j + 4:]
+                element = element.replace('(', '').replace(')', '')
+            transformed_string += f"{substrings[i]}={element}"
+            if i < len(elements) - 1:
+                transformed_string += ", "
+        return transformed_string
+            
                 
                      
 
@@ -209,7 +230,8 @@ class AdvanceEq():
 #eq = "10x - 150x  - 3 = 0"
 #eq = "2x + 3x +5 + 3x + 4 = 0"
 #eq = "9*x/4 + 1/2 = 0" #problema *1* all infinito (sembra risolto, da testare)
-eq = "8(x + 3) + 6(2x + 1) + (4(4x + 2) + 2(6x +7)) = 0"
+#eq = "8(x + 3) + 6(2x + 1) + (4(4x + 2) + 2(6x +7)) = 0"
+eq = "x^2 = 4"
 step_solver = AdvanceEq(eq)
 new_step, string_eq, op_done, val_used = step_solver.eq_do_step(1)
 print(string_eq)
