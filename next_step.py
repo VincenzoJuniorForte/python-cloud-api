@@ -207,14 +207,13 @@ class AdvanceEq():
 
         elements = [element.strip() for element in elements]
         
-        substrings = ["x\u2081", "x\u2082", "x\u2083", "x\u2084"]
         transformed_string = ""
         for i, element in enumerate(elements):
             j = element.find("sqrt")
             if j != -1:
                 element = element[:j] + "√" + element[j + 4:]
                 element = element.replace('(', '').replace(')', '')
-            transformed_string += f"{substrings[i]}={element}"
+            transformed_string += f"x_{i+1}={element}"
             if i < len(elements) - 1:
                 transformed_string += ", "
         return transformed_string
