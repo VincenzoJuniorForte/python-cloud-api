@@ -77,12 +77,15 @@ class AdvanceEq():
         return highest_idd
 
     def do_last_step(self):
+        self.op_done = "risolto"
+        self.val_used = ""
+        #print("last step")
         if self.ex_type == "factor":
             return(factor(self.eq))
         elif self.ex_type == "expand":
             return(expand(self.eq))
-        #elif self.ex_type == "equation" and degree(self.eq) == 2:
-        #    return(self.eq_grade_two_solve())
+        elif self.ex_type == "equation" and degree(self.eq) == 2:
+            return(self.eq_grade_two_solve())
         else:
             return(solve(self.eq))
 
@@ -94,8 +97,9 @@ class AdvanceEq():
             idd -= 1
             s_new_exp = sorted(str(new_expr))
             if idd == 0:
-                #print("non è cambiato")
+                #print(tree)
                 #print("expr: ", new_expr)
+                #print("non è cambiato")
                 return(simplify(new_expr))
             new_tree = self.evaluate_expression(tree, idd)
             new_expr = self.build_expression(new_tree)
@@ -125,7 +129,7 @@ class AdvanceEq():
                         #print("valore nuovo: ", new_value)
                         #print(f"valore vecchio: {value} valore nuovo: {new_value} check cambio: {str(value) != str(new_value)}")
                         if(str(value) != str(new_value)):
-                            #print("è cambiato")
+                           #print("è cambiato")
                             self.step_done = True
                     else:
                         new_value = self.evaluate_expression(value, idd)
@@ -179,13 +183,42 @@ class AdvanceEq():
             self.step_done = False
         return self.eq, string_eq, self.op_done, str(self.val_used)
 
-    def eq_grade_two_solve(self):
+    def grade_two_formula_solve(self):
         coeffs = Poly(self.eq).as_dict()
         if (0,) in coeffs and (1,) in coeffs:
             a, b, c = coeffs[(2,)], coeffs[(1,)], coeffs[(0,)]
-            return(solve(self.eq))
+            delta = b**2 - 4*a*c
+            if delta < 0:
+                self.op_done = "delta_neg"
+                self.val_used = ""
+                return("equazione impossibile")
+            elif delta == 0:
+                x = -b/(2*a)
+                self.op_done = "delta_zero"
+                self.val_used = ""
+                return(x)
+            else:
+                x1 = (-b + sqrt(delta))/(2*a)
+                x2 = (-b - sqrt(delta))/(2*a)
+                list_x = [x1, x2]
+                self.op_done = "delta_pos"
+                self.val_used = ""
+                return(list_x)
+    def grade_two_simple_solve(self):
+        coeffs = Poly(self.eq).as_dict()
+        if (0,) in coeffs:
+            a, c = coeffs[(2,)], coeffs[(0,)]
+            x = sqrt(-c/a)
+            list_x = [x, -x]
+            self.op_done = "sqrt"
+            self.val_used = str(-c/a)
+            return(list_x)
+    def eq_grade_two_solve(self):
+        coeffs = Poly(self.eq).as_dict()
+        if (0,) in coeffs and (1,) in coeffs:
+            return(self.grade_two_formula_solve())
         elif (0,) in coeffs:
-            return(solve(self.eq))
+            return(self.grade_two_simple_solve())
         elif (1,) in coeffs:
             self.ex_type = "factored_equ"
             return(solve(self.eq))
@@ -218,10 +251,6 @@ class AdvanceEq():
                 transformed_string += ", "
         return transformed_string
             
-                
-                     
-
-
 #problema pow
 #x = Symbol('x')
 #eq = "((-5x^2 + 4x + 5x)(x+1) - 3(x+2))" #caso particolare: -5*x**2 + 4*x + 5*x sympy raccoglie la x, estrazione operazioni incompleta
@@ -230,11 +259,12 @@ class AdvanceEq():
 #eq = "2x + 3x +5 + 3x + 4 = 0"
 #eq = "9*x/4 + 1/2 = 0" #problema *1* all infinito (sembra risolto, da testare)
 #eq = "8(x + 3) + 6(2x + 1) + (4(4x + 2) + 2(6x +7)) = 0"
-eq = "x^2 = 4"
+eq = "x^2 -4 = 0"
+print("equazione: ", eq)
 step_solver = AdvanceEq(eq)
 new_step, string_eq, op_done, val_used = step_solver.eq_do_step(1)
 print(string_eq)
-#print("operazione fattissima: ", op_done)
-#print("valore usatissimo: ", val_used)
+print("operazione fattissima: ", op_done)
+print("valore usatissimo: ", val_used)
 # potenzialmente da migliorare la creazione dell'albero. es: ignorare moltiplicazione tra valore e simbolo lasciandola già svolta. 
 # valutare di tenere ogni addizione come operazione separata.
