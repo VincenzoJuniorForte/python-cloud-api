@@ -191,7 +191,7 @@ class AdvanceEq():
             if delta < 0:
                 self.op_done = "delta_neg"
                 self.val_used = ""
-                return("equazione impossibile")
+                return("Equazione impossibile")
             elif delta == 0:
                 x = -b/(2*a)
                 self.op_done = "delta_zero"
@@ -210,7 +210,7 @@ class AdvanceEq():
             a, c = coeffs[(2,)], coeffs[(0,)]
             x = sqrt(-c/a)
             list_x = [x, -x]
-            self.op_done = "sqrt"
+            self.op_done = "final_sqrt"
             self.val_used = str(-c/a)
             return(list_x)
     def eq_grade_two_solve(self):
@@ -268,3 +268,5 @@ print("operazione fattissima: ", op_done)
 print("valore usatissimo: ", val_used)
 # potenzialmente da migliorare la creazione dell'albero. es: ignorare moltiplicazione tra valore e simbolo lasciandola già svolta. 
 # valutare di tenere ogni addizione come operazione separata.
+# return su delta e chiamata nuova funzione per risolvere delta
+# foglio appunti + cerchio step da inviare
