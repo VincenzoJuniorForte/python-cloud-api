@@ -70,5 +70,3 @@ If you add a dependency to the python source code, add it to `requirements.txt` 
     ./scripts/run_tests.sh
 
 If you add a dependency to the tests, add it to `test_requirements.txt`
-
-

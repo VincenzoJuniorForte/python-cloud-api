@@ -139,7 +139,7 @@ def calculate(operation, step, task='expand'):
     def solve_expression(op, step):
         op = parse_expr(op, transformations='all', evaluate=False)
         step = parse_expr(step, transformations='all', evaluate=False)
-        
+
         if task == 'expand':
             last = expand(op)
 
@@ -176,4 +176,3 @@ def calculate(operation, step, task='expand'):
         return solve_equation(operation, step)
     else:
         return solve_expression(operation, step)
-

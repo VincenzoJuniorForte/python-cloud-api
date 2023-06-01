@@ -3,3 +3,4 @@ sympy==1.11.1
 functions-framework==3.*
 google-cloud-error-reporting==1.*
 firebase-admin==6.*
+pre-commit

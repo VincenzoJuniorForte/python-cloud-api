@@ -25,7 +25,7 @@ class AdvanceEq():
             self.ex_type = "expand"
         self.eq = parse_expr(eq,transformations='all', evaluate=False)
         # print(self.eq)
-        
+
     def extract_parts(self, eq, idd=1):
         parts = []
         for arg in eq.args:
@@ -64,7 +64,7 @@ class AdvanceEq():
             else:
                 parts.append(arg)
         return func(*parts, evaluate=False)
-    
+
     def get_highest_idd(self, tree):
         highest_idd = tree['idd']
         if 'idd' in tree:
@@ -199,5 +199,5 @@ class AdvanceEq():
 #print(string_eq)
 #print("operazione fattissima: ", op_done)
 #print("valore usatissimo: ", val_used)
-# potenzialmente da migliorare la creazione dell'albero. es: ignorare moltiplicazione tra valore e simbolo lasciandola già svolta. 
+# potenzialmente da migliorare la creazione dell'albero. es: ignorare moltiplicazione tra valore e simbolo lasciandola già svolta.
 # valutare di tenere ogni addizione come operazione separata.

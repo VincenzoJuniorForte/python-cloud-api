@@ -24,4 +24,3 @@ fi
 curl -v "$URL" \
 -H 'Content-Type: application/json' \
 -d "$PAYLOAD"
-

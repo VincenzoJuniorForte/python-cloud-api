@@ -34,4 +34,3 @@ pip-install-quiet() {
 
 echo "Checking/Installing python dependencies..."
 pip-install-quiet requirements.txt
-
