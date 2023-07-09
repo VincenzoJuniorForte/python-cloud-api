@@ -57,7 +57,7 @@ def http_handler(request):
         params = request_json
 
         if not params or not all(
-                key in params for key in ('operation', 'step', 'step_number', 'user_id', 'exercise_id', 'last_correct')):
+                key in params for key in ('operation', 'step', 'step_number', 'user_name', 'user_id', 'exercise_id', 'user_email', 'last_correct')):
             return {'error': 'Missing params'}, 400, headers
 
         raw_solution, is_correct, is_last = calculate(params['operation'], params['step'],params['last_correct'], params.get('task', None))
@@ -85,7 +85,8 @@ def http_handler(request):
 def track_event(params, formatted_solution1, is_correct, is_last, new_step, op_done, val_used):
     try:
         batch = firestore_client.batch()
-        user = firestore_client.collection('users').document(params['user_id'])
+        user = firestore_client.collection('users').document(params['user_email'])
+        #email = firestore_client.collection('emails').document(params['user_email'])
         exercise = user.collection('exercises').document(params['exercise_id'])
         event = exercise.collection('events').document()
         data = {
@@ -107,7 +108,7 @@ def track_event(params, formatted_solution1, is_correct, is_last, new_step, op_d
             'created_at': firestore.SERVER_TIMESTAMP,
             'updated_at': firestore.SERVER_TIMESTAMP,
         }
-        batch.set(user, {'id': params['user_id'], 'updated_at': firestore.SERVER_TIMESTAMP})
+        batch.set(user, {'id': params['user_id'], 'name' : params['user_name'], 'email' : params['user_email'], 'updated_at': firestore.SERVER_TIMESTAMP})
         batch.set(exercise, {'id': params['exercise_id'], 'updated_at': firestore.SERVER_TIMESTAMP})
         batch.set(event, data)
         batch.commit()
