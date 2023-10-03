@@ -233,6 +233,8 @@ class AdvanceEq():
             string_eq = string_eq[:j] + "-" + string_eq[j + 5:]
         if string_eq[0] =="[" and string_eq[len(string_eq) - 1] == "]":
             string_eq = self.transform_string(string_eq)
+
+        string_eq = string_eq.replace(" ", "")
         return string_eq
     
     def transform_string(self, input_string):
@@ -245,8 +247,11 @@ class AdvanceEq():
             j = element.find("sqrt")
             if j != -1:
                 element = element[:j] + "√" + element[j + 4:]
-                element = element.replace('(', '').replace(')', '')
-            transformed_string += f"x_{i+1}={element}"
+                # element = element.replace('(', '').replace(')', '')
+            if len(elements) > 1:
+                transformed_string += f"x_{i+1}={element}"
+            else:
+                transformed_string += f"x={element}"
             if i < len(elements) - 1:
                 transformed_string += ", "
         return transformed_string
@@ -259,7 +264,7 @@ class AdvanceEq():
 #eq = "2x + 3x +5 + 3x + 4 = 0"
 #eq = "9*x/4 + 1/2 = 0" #problema *1* all infinito (sembra risolto, da testare)
 #eq = "8(x + 3) + 6(2x + 1) + (4(4x + 2) + 2(6x +7)) = 0"
-eq = "x^2 -4 = 0"
+eq = "30x+20x=0"
 print("equazione: ", eq)
 step_solver = AdvanceEq(eq)
 new_step, string_eq, op_done, val_used = step_solver.eq_do_step(1)

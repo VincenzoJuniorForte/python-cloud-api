@@ -57,7 +57,7 @@ def http_handler(request):
         params = request_json
 
         if not params or not all(
-                key in params for key in ('operation', 'step', 'step_number', 'user_name', 'user_id', 'exercise_id', 'user_email', 'last_correct')):
+                key in params for key in ('operation', 'step', 'step_number', 'user_id', 'exercise_id', 'last_correct')):
             return {'error': 'Missing params'}, 400, headers
 
         raw_solution, is_correct, is_last = calculate(params['operation'], params['step'],params['last_correct'], params.get('task', None))
