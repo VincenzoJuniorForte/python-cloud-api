@@ -264,13 +264,20 @@ class AdvanceEq():
 #eq = "2x + 3x +5 + 3x + 4 = 0"
 #eq = "9*x/4 + 1/2 = 0" #problema *1* all infinito (sembra risolto, da testare)
 #eq = "8(x + 3) + 6(2x + 1) + (4(4x + 2) + 2(6x +7)) = 0"
-eq = "30x+20x=0"
+eq = "x=1"
 print("equazione: ", eq)
 step_solver = AdvanceEq(eq)
 new_step, string_eq, op_done, val_used = step_solver.eq_do_step(1)
 print(string_eq)
+print("new_step: ", new_step)
 print("operazione fattissima: ", op_done)
 print("valore usatissimo: ", val_used)
+# step_solver = AdvanceEq(string_eq)
+# new_step, string_eq, op_done, val_used = step_solver.eq_do_step(1)
+# print(string_eq)
+# print("new_step: ", new_step)
+# print("operazione fattissima: ", op_done)
+# print("valore usatissimo: ", val_used)
 # potenzialmente da migliorare la creazione dell'albero. es: ignorare moltiplicazione tra valore e simbolo lasciandola già svolta. 
 # valutare di tenere ogni addizione come operazione separata.
 # return su delta e chiamata nuova funzione per risolvere delta

@@ -62,11 +62,16 @@ def http_handler(request):
 
         raw_solution, is_correct, is_last = calculate(params['operation'], params['step'],params['last_correct'], params.get('task', None))
         formatted_solution1 = str(raw_solution)
+        print("lo step nel backend: ", params['step'])
+        print("last correct nel backend: ", params['last_correct'])
         # if (len(raw_solution) > 1):
         #     formatted_solution2 = str(raw_solution[1])
         # else:
         #     formatted_solution2 = None
-        raw_new_step, new_step, op_done, val_used = next_step(params['last_correct'])
+        if(not is_correct):
+            raw_new_step, new_step, op_done, val_used = next_step(params['last_correct'])
+        else:
+            raw_new_step, new_step, op_done, val_used = next_step(params['step'])
         track_event(params, formatted_solution1, is_correct, is_last, new_step, op_done, val_used)
 
         return {
