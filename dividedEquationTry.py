@@ -2,7 +2,6 @@ from sympy import *
 
 class AdvanceEq():
     def __init__(self, eq):
-        #self.ex_type = ex_type
         self.is_eq = False
         self.flag = False
         self.step_done = False
@@ -10,80 +9,52 @@ class AdvanceEq():
         self.val_used = None
         self.first_step = False
         self.msg = ""
+        
+        # Split the equation into parts with and without symbols
         if '=' in eq:
             self.is_eq = True
             self.ex_type = "equation"
             eq_cmp = eq.split("=")
-            lhs = eq_cmp[0]
-            rhs = eq_cmp[1]
-            if rhs == " 0" or rhs == "0":
-                eq = f"{lhs}"
+            lhs = eq_cmp[0].strip()  # Remove leading/trailing whitespace
+            rhs = eq_cmp[1].strip()  # Remove leading/trailing whitespace
+            if rhs == "0":
+                eq = lhs
             else:
                 eq = f"{lhs} - ({rhs})"
                 self.first_step = True
         else:
             self.ex_type = "expand"
-        self.eq = parse_expr(eq,transformations='all', evaluate=False)
-        # print(self.eq)
+        
+        self.eq = parse_expr(eq, transformations='all', evaluate=False)
+        self.lhs = []
+        self.rhs = []
+        is_lhs = True
+        
+        for term in self.eq.as_ordered_terms():
+            if term.has(Symbol):
+                if is_lhs:
+                    self.lhs.append(term)
+                else:
+                    self.rhs.append(term)
+            else:
+                is_lhs = False
+                self.rhs.append(term)
+
+        print("SIMBOLI EQ: ", self.lhs)
+        print("COSTANTI EQ: ", self.rhs)
+    # print(self.eq)
         
     def extract_parts(self, eq, idd=1):
         parts = []
-        # print("EQ: ", eq)
-        # print("EQ ARGS: ", eq.args)
-        # print("EQ FUNC: ", eq.func)
-        # print("EQ FUNC NAME: ", eq.func.__name__)
-        flagghina = 0
         for arg in eq.args:
-            # print("ARGOMENTI: ", arg)
-            # print("ARGOMENTI FUNC: ", arg.func)
-            if eq.func == Add and flagghina == 0:
-                flagghina = 1
-                sub_expr = self.manage_add(eq.args, idd)
-                #print("primo if : ",sub_expr)
-            elif eq.func == Add and flagghina == 1:
-                continue
-            elif isinstance(arg, (Symbol, Integer)):
-                flagghina = 0
-                sub_expr = arg
-                #print("secondo if : ",sub_expr)
-            elif isinstance(arg, Rational):
-                flagghina = 0
-                sub_expr = ({'numerator': arg.p, 'denominator': arg.q, 'idd': idd})
-               # print("terzo if : ",sub_expr)
-            elif hasattr(arg, 'args'):
-                flagghina = 0
-                # print(eq.func)
-                # print("ARG FUNC: ", arg.func)
-                sub_expr = self.extract_parts(arg, (idd + 1))
-                #print("quarto if : ",sub_expr)
-            if(sub_expr != None):
-                parts.append(sub_expr)
-            sub_expr = None
-        # if eq.func == Add:
-        #     return parts
-        return {eq.func.__name__: parts, 'idd': idd}
-
-    def manage_add(self, add_expr, idd=1):
-        if len(add_expr) == 1:
-            return add_expr[0]
-        parts = []
-        for arg in add_expr:
-            # if isinstance(arg, tuple):
-            #     print("sono una tupla")
-            #     parts.append({'Add': self.manage_add(arg)})
-            # else:
-            if hasattr(arg, 'args') and not isinstance(arg, (Symbol, Integer)):
-                #print("sono un argomento", arg)
-                parts.append(self.extract_parts(arg, idd +30))
-            ## IDEA: priorita' molto alta della moltiplicazione o operazione interna diversa da ADD. (funziona sempre??)
-            else:
+            if isinstance(arg, (Symbol, Integer)):
                 parts.append(arg)
-                #print("argomentino: ", arg)
-        if len(parts) == 2:
-            #print("parts: ", parts)
-            return {'Add': parts, 'idd': idd + 1}
-        #print("partsZero: ", parts)
-        return {'Add': [parts[0], self.manage_add(parts[1:], idd + 1)], 'idd': idd + 1}
+            elif isinstance(arg, Rational):
+                parts.append({'numerator': arg.p, 'denominator': arg.q, 'idd': idd})
+            elif hasattr(arg, 'args'):
+                sub_expr = self.extract_parts(arg, (idd + 1))
+                parts.append(sub_expr)
+        return {eq.func.__name__: parts, 'idd': idd}
 
     def build_expression(self, tree):
         set_keys = {'numerator', 'denominator', 'idd'}
@@ -137,71 +108,52 @@ class AdvanceEq():
             return(solve(self.eq))
 
     def check_step(self, new_expr, tree, idd):
-        r_exp = str(self.eq).replace("(", "").replace(")", "")
-        s_exp = sorted(r_exp)
-        r_new_expr = str(new_expr).replace("(", "").replace(")", "")
-        s_new_exp = sorted(r_new_expr)
-        #print(s_exp == s_new_exp)
+        s_exp = sorted(str(self.eq))
+        s_new_exp = sorted(str(new_expr))
+
         while (s_exp == s_new_exp) and not self.step_done:
             idd -= 1
-            #print("idd check_step: ", idd)
+            s_new_exp = sorted(str(new_expr))
             if idd == 0:
+                #print(tree)
+                #print("expr: ", new_expr)
                 #print("non è cambiato")
-                #print("new_expr: ", new_expr)
-                self.val_used = new_expr
                 return(simplify(new_expr))
-            #print("entro qua pordcoddio", tree)
             new_tree = self.evaluate_expression(tree, idd)
             new_expr = self.build_expression(new_tree)
-            r_new_expr = str(new_expr).replace("(", "").replace(")", "")
-            s_new_exp = sorted(r_new_expr)
-            #s_new_exp = sorted(str(new_expr))
         return(new_expr)
 
     def evaluate_expression(self, expression, idd):
         if idd == 0 or self.step_done:
             return expression
-        if idd == 1 and not self.step_done:
-            #print("PORCODDUE: ", expression)
-            self.op_done =  list(expression.keys())[0]
-            value = self.build_expression(expression)
-        #print("expression: ", expression)
+
         if isinstance(expression, dict):
             operation = list(expression.keys())[0]
             values = expression[operation]
-            # print("values: ", values)
-            # print("operation: ", operation)
             new_values = []
             for value in values:
                 if isinstance(value, dict) and 'numerator' in value and 'denominator' in value:
                     frac = Rational(value['numerator'], value['denominator'])
                     new_values.append(frac)
                 elif isinstance(value, dict):
-                    # print("HALO")
-                    # print("idd: ", idd)
-                    # print("VALUE: ", value)
-                    # print("step done?", self.step_done)
                     if value['idd'] == idd and not self.step_done:
                         operation_at_idd = list(value.keys())[0]
                         #print("Operation at idd:", operation_at_idd)
                         self.op_done = operation_at_idd
                         value = self.build_expression(value)
-                       # print("valore usato: ", value)
+                        #print("valore usato: ", value)
                         self.val_used = value
                         new_value = simplify(value)
-                        # print("valore nuovo: ", new_value)
-                        # print(f"valore vecchio: {value} valore nuovo: {new_value} check cambio: {str(value) != str(new_value)}")
-                        # print("idd: ", idd)
+                        #print("valore nuovo: ", new_value)
+                        #print(f"valore vecchio: {value} valore nuovo: {new_value} check cambio: {str(value) != str(new_value)}")
                         if(str(value) != str(new_value)):
-                            #print("è cambiato")
+                           #print("è cambiato")
                             self.step_done = True
                     else:
-                        #print("SALVE SONO IO")
                         new_value = self.evaluate_expression(value, idd)
                     new_values.append(new_value)
                 else:
                     new_values.append(value)
-            #print ("new_values: ", new_values)
             new_expression = {operation: new_values, 'idd': expression['idd']}
             return new_expression
         return expression
@@ -209,8 +161,8 @@ class AdvanceEq():
     def eq_do_step(self, steps: int = 1):
         if (str(self.eq) == "0"):
             return("equazione indeterminata", "Indeterminata", self.op_done, str(self.val_used))
-        # if not self.eq.free_symbols:
-        #     return ("equazione impossibile", "Impossibile", self.op_done, str(self.val_used))
+        if not self.eq.free_symbols:
+            return ("equazione impossibile", "Impossibile", self.op_done, str(self.val_used))
         if self.first_step:
             self.first_step = False
             string_eq = str(self.eq) + " = 0"
@@ -299,8 +251,6 @@ class AdvanceEq():
             string_eq = string_eq[:j] + "-" + string_eq[j + 5:]
         if string_eq[0] =="[" and string_eq[len(string_eq) - 1] == "]":
             string_eq = self.transform_string(string_eq)
-
-        string_eq = string_eq.replace(" ", "")
         return string_eq
     
     def transform_string(self, input_string):
@@ -313,11 +263,8 @@ class AdvanceEq():
             j = element.find("sqrt")
             if j != -1:
                 element = element[:j] + "√" + element[j + 4:]
-                # element = element.replace('(', '').replace(')', '')
-            if len(elements) > 1:
-                transformed_string += f"x_{i+1}={element}"
-            else:
-                transformed_string += f"x={element}"
+                element = element.replace('(', '').replace(')', '')
+            transformed_string += f"x_{i+1}={element}"
             if i < len(elements) - 1:
                 transformed_string += ", "
         return transformed_string
@@ -325,29 +272,21 @@ class AdvanceEq():
 #problema pow
 #x = Symbol('x')
 #eq = "((-5x^2 + 4x + 5x)(x+1) - 3(x+2))" #caso particolare: -5*x**2 + 4*x + 5*x sympy raccoglie la x, estrazione operazioni incompleta
-#eq = "-x*(x + 1)*(5*x - 9) - (3*x + 6) = 0" #problema loop
+#eq = "-x*(x + 1)*(5*x - 9) - (3*x + 6)" #problema loop
 #eq = "10x - 150x  - 3 = 0"
+#eq = "2x + 3x +5 + 3x + 4 = 0"
 #eq = "9*x/4 + 1/2 = 0" #problema *1* all infinito (sembra risolto, da testare)
 #eq = "8(x + 3) + 6(2x + 1) + (4(4x + 2) + 2(6x +7)) = 0"
-#eq = "(8x + 3) * (3)= 0"
-eq = "5x +2 +3= 0"
+#eq = "x^2 -4 = 0"
+eq = "3x + (6x +5) + 2 = 0"
 print("equazione: ", eq)
 step_solver = AdvanceEq(eq)
 new_step, string_eq, op_done, val_used = step_solver.eq_do_step(1)
 print(string_eq)
-print("new_step: ", new_step)
 print("operazione fattissima: ", op_done)
 print("valore usatissimo: ", val_used)
-## valore usatissimo maledetto lui
-## risolvere val usat brutalmente
-## risolvere val usat con albero
-# step_solver = AdvanceEq(string_eq)
-# new_step, string_eq, op_done, val_used = step_solver.eq_do_step(1)
-# print(string_eq)
-# print("new_step: ", new_step)
-# print("operazione fattissima: ", op_done)
-# print("valore usatissimo: ", val_used)
-# potenzialmente da migliorare la creazione dell'albero 
+
+# potenzialmente da migliorare la creazione dell'albero. es: ignorare moltiplicazione tra valore e simbolo lasciandola già svolta. 
 # valutare di tenere ogni addizione come operazione separata.
 # return su delta e chiamata nuova funzione per risolvere delta
 # foglio appunti + cerchio step da inviare
