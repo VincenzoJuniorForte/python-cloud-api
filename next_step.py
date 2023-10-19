@@ -1,7 +1,7 @@
 from sympy import *
 
 class AdvanceEq():
-    def __init__(self, eq):
+    def __init__(self, eq, pene_step=False):
         #self.ex_type = ex_type
         self.is_eq = False
         self.flag = False
@@ -9,6 +9,7 @@ class AdvanceEq():
         self.op_done = None
         self.val_used = None
         self.first_step = False
+        self.last_step = pene_step
         self.msg = ""
         if '=' in eq:
             self.is_eq = True
@@ -208,9 +209,14 @@ class AdvanceEq():
 
     def eq_do_step(self, steps: int = 1):
         if (str(self.eq) == "0"):
-            return("equazione indeterminata", "Indeterminata", self.op_done, str(self.val_used))
+            return("equazione indeterminata", "Indeterminata", self.op_done, str(self.val_used)), true
         # if not self.eq.free_symbols:
-        #     return ("equazione impossibile", "Impossibile", self.op_done, str(self.val_used))
+        #     return ("equazione impossibile", "Impossibile", self.op_done, str(self.val_used)), True
+        if self.last_step:
+            self.eq = self.do_last_step()
+            string_eq = str(self.eq)
+            string_eq = self.format_replace(string_eq)
+            return self.eq, string_eq, self.op_done, str(self.val_used)
         if self.first_step:
             self.first_step = False
             string_eq = str(self.eq) + " = 0"
@@ -219,21 +225,29 @@ class AdvanceEq():
         for s in range(steps):
             eq = self.eq
             tree = self.extract_parts(eq, 1)
-            #print(f"Albero:{tree}")
+            print(f"Albero:{tree}")
             step_depth = self.get_highest_idd(tree)
             #print("depth: ", step_depth)
             ntree = self.evaluate_expression(tree, step_depth)
             nequ = self.build_expression(ntree)
             self.eq = self.check_step(nequ, tree, step_depth)
             if (str(self.eq) == "0"):
-               return("equazione indeterminata", "Indeterminata", self.op_done, str(self.val_used))
+               return("equazione indeterminata", "Indeterminata", self.op_done, str(self.val_used)), true
             if not self.eq.free_symbols:
-               return ("equazione impossibile", "Impossibile", self.op_done, str(self.val_used))
+               return ("equazione impossibile", "Impossibile", self.op_done, str(self.val_used)), true
             if str(self.eq) == str(eq):
-                self.eq = self.do_last_step()
+                print("ultimo step")
+                if self.last_step == false:
+                    self.last_step = true
+                    string_eq = brutal_right_move(self.eq)
+                    string_eq = self.format_replace(string_eq)
+                    return self.eq, string_eq, self.op_done, "Separa i termini noti dalle incognite!", self.last_step
+                else:
+                    self.last_step = false
+                    self.eq = self.do_last_step()
                 string_eq = str(self.eq)
                 string_eq = self.format_replace(string_eq)
-                return self.eq, string_eq, self.op_done, str(self.val_used)
+                return self.eq, string_eq, self.op_done, str(self.val_used), self.last_step
             if self.is_eq:
                 string_eq = str(self.eq) + " = 0"
                 string_eq = self.format_replace(string_eq)
@@ -247,7 +261,7 @@ class AdvanceEq():
                 self.step_done = False
                 return(self.eq_do_step(steps))
             self.step_done = False
-        return self.eq, string_eq, self.op_done, str(self.val_used)
+        return self.eq, string_eq, self.op_done, str(self.val_used), self.last_step
 
     def grade_two_formula_solve(self):
         coeffs = Poly(self.eq).as_dict()
@@ -321,7 +335,21 @@ class AdvanceEq():
             if i < len(elements) - 1:
                 transformed_string += ", "
         return transformed_string
-            
+
+def brutal_right_move(eq):
+    x = symbols('x')
+    lhs = 0
+    rhs = 0
+    print("equazione: ", eq.args)
+    for arg in eq.args:
+        if x in arg.free_symbols:
+            lhs += arg
+        elif isinstance(arg, (Integer)):
+            rhs -= arg
+    eq = f"{lhs} = {rhs}"
+    print("equazione dopo: ", eq)
+    return eq
+
 #problema pow
 #x = Symbol('x')
 #eq = "((-5x^2 + 4x + 5x)(x+1) - 3(x+2))" #caso particolare: -5*x**2 + 4*x + 5*x sympy raccoglie la x, estrazione operazioni incompleta
@@ -330,17 +358,25 @@ class AdvanceEq():
 #eq = "9*x/4 + 1/2 = 0" #problema *1* all infinito (sembra risolto, da testare)
 #eq = "8(x + 3) + 6(2x + 1) + (4(4x + 2) + 2(6x +7)) = 0"
 #eq = "(8x + 3) * (3)= 0"
-eq = "5x +2 +3= 0"
+eq = "4x - 5 = 0"
 print("equazione: ", eq)
 step_solver = AdvanceEq(eq)
-new_step, string_eq, op_done, val_used = step_solver.eq_do_step(1)
+new_step, string_eq, op_done, val_used, penultimo_step = step_solver.eq_do_step(1)
 print(string_eq)
 print("new_step: ", new_step)
+print("string eq: ", string_eq)
 print("operazione fattissima: ", op_done)
 print("valore usatissimo: ", val_used)
+print("penultimo step: ", penultimo_step)
 ## valore usatissimo maledetto lui
-## risolvere val usat brutalmente
 ## risolvere val usat con albero
+##appena comincio il manage add sposto i valori in modo da avere le somme migliori
+
+
+###risolvere val usat brutalmente
+###roba brutta passaggio a destra
+###radici potenze divisioni
+
 # step_solver = AdvanceEq(string_eq)
 # new_step, string_eq, op_done, val_used = step_solver.eq_do_step(1)
 # print(string_eq)

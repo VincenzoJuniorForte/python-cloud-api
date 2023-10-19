@@ -57,22 +57,23 @@ def http_handler(request):
         params = request_json
 
         if not params or not all(
-                key in params for key in ('operation', 'step', 'step_number', 'user_id', 'exercise_id', 'last_correct')):
+                key in params for key in ('operation', 'step', 'step_number', 'user_id', 'exercise_id', 'last_correct', 'pene_step')):
             return {'error': 'Missing params'}, 400, headers
 
-        raw_solution, is_correct, is_last = calculate(params['operation'], params['step'],params['last_correct'], params.get('task', None))
+        raw_solution, is_correct, is_last = calculate(params['operation'], params['step'],params['last_correct'],params['pene_step'], params.get('task', None))
         formatted_solution1 = str(raw_solution)
         print("lo step nel backend: ", params['step'])
         print("last correct nel backend: ", params['last_correct'])
+        print("pene step nel backend: ", params['pene_step'])
         # if (len(raw_solution) > 1):
         #     formatted_solution2 = str(raw_solution[1])
         # else:
         #     formatted_solution2 = None
         if(not is_correct):
-            raw_new_step, new_step, op_done, val_used = next_step(params['last_correct'])
+            raw_new_step, new_step, op_done, val_used, penultimo_step = next_step(params['last_correct'], params['pene_step'])
         else:
-            raw_new_step, new_step, op_done, val_used = next_step(params['step'])
-        track_event(params, formatted_solution1, is_correct, is_last, new_step, op_done, val_used)
+            raw_new_step, new_step, op_done, val_used, penultimo_step = next_step(params['step'], params['pene_step'])
+        track_event(params, formatted_solution1, is_correct, is_last, new_step, op_done, val_used, penultimo_step)
 
         return {
                    'solution': formatted_solution1,
@@ -80,14 +81,15 @@ def http_handler(request):
                    'is_last': is_last,
                    'new_step': new_step,
                    'op_done': op_done,
-                   'val_used': val_used
+                   'val_used': val_used,
+                   'penultimo_step': penultimo_step
                }, 200, headers
     except Exception as e:
         report_exception(error_reporting_client, e)
         abort(500)
 
 
-def track_event(params, formatted_solution1, is_correct, is_last, new_step, op_done, val_used):
+def track_event(params, formatted_solution1, is_correct, is_last, new_step, op_done, val_used, penultimo_step):
     try:
         batch = firestore_client.batch()
         user = firestore_client.collection('users').document(params['user_email'])
@@ -100,7 +102,8 @@ def track_event(params, formatted_solution1, is_correct, is_last, new_step, op_d
                 'step': params['step'],
                 'task': params.get('task', None),
                 'step_number': params['step_number'],
-                'last_correct' :params['last_correct']
+                'last_correct' :params['last_correct'],
+                'pene_step': params['pene_step']
             },
             'output': {
                 'solution': formatted_solution1,
@@ -108,7 +111,8 @@ def track_event(params, formatted_solution1, is_correct, is_last, new_step, op_d
                 'is_last': is_last,
                 'new_step': new_step,
                 'op_done': op_done,
-                'val_used': val_used
+                'val_used': val_used,
+                'penultimo_step': penultimo_step
             },
             'created_at': firestore.SERVER_TIMESTAMP,
             'updated_at': firestore.SERVER_TIMESTAMP,
@@ -126,10 +130,10 @@ def report_exception(client, exception):
         client.report_exception()
     traceback.print_exc()
 
-def next_step(step):
-    step_solver = AdvanceEq(step)
-    new_step, string_eq, op_done, val_used = step_solver.eq_do_step(1)
-    return new_step, string_eq, op_done, val_used
+def next_step(step, pene_step):
+    step_solver = AdvanceEq(step, pene_step)
+    new_step, string_eq, op_done, val_used, penultimo_step = step_solver.eq_do_step(1)
+    return new_step, string_eq, op_done, val_used, penultimo_step
 
 def calculate(operation, step, lastCorrect, task='expand'):
     """
