@@ -60,7 +60,7 @@ def http_handler(request):
                 key in params for key in ('operation', 'step', 'step_number', 'user_id', 'exercise_id', 'last_correct', 'pene_step')):
             return {'error': 'Missing params'}, 400, headers
 
-        raw_solution, is_correct, is_last = calculate(params['operation'], params['step'],params['last_correct'],params['pene_step'], params.get('task', None))
+        raw_solution, is_correct, is_last = calculate(params['operation'], params['step'],params['last_correct'], params.get('task', None))
         formatted_solution1 = str(raw_solution)
         print("lo step nel backend: ", params['step'])
         print("last correct nel backend: ", params['last_correct'])
