@@ -1,10 +1,8 @@
-import datetime
-import uuid
 import traceback
 
-from sympy import *
+from sympy import Symbol, parse_expr, solve, expand, factor, simplify
 from next_step import AdvanceEq
-from sympy.parsing.sympy_parser import parse_expr
+from eq_from_img import get_eq_from_img
 import functions_framework
 from google.cloud import error_reporting
 from google.auth.exceptions import DefaultCredentialsError
@@ -27,7 +25,7 @@ except DefaultCredentialsError:
 
 @functions_framework.http
 def http_handler(request):
-    """ HTTP endpoint deployed on Google Cloud Function.
+    """HTTP endpoint deployed on Google Cloud Function.
     Args:
         request (flask.Request): The request object.
         <https://flask.palletsprojects.com/en/1.1.x/api/#incoming-request-data>
@@ -37,88 +35,175 @@ def http_handler(request):
     """
 
     try:
-        if request.method == 'OPTIONS':
+        if request.method == "OPTIONS":
             headers = {
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Methods': 'POST',
-                'Access-Control-Allow-Headers': 'Content-Type',
-                'Access-Control-Max-Age': '3600'
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "POST",
+                "Access-Control-Allow-Headers": "Content-Type",
+                "Access-Control-Max-Age": "3600",
             }
 
-            return '', 204, headers
-        headers = {
-            'Access-Control-Allow-Origin': '*'
-        }
+            return "", 204, headers
+        headers = {"Access-Control-Allow-Origin": "*"}
 
-        if request.method != 'POST':
-            return {'error': 'Bad method. Allowed methods: [POST]'}, 405, headers
+        if request.method != "POST":
+            return {"error": "Bad method. Allowed methods: [POST]"}, 405, headers
 
         request_json = request.get_json()
         params = request_json
 
         if not params or not all(
-                key in params for key in ('operation', 'step', 'step_number', 'user_id', 'exercise_id', 'last_correct', 'pene_step')):
-            return {'error': 'Missing params'}, 400, headers
+            key in params
+            for key in (
+                "operation",
+                "step",
+                "step_number",
+                "user_id",
+                "exercise_id",
+                "last_correct",
+                "pene_step",
+            )
+        ):
+            return {"error": "Missing params"}, 400, headers
 
-        raw_solution, is_correct, is_last = calculate(params['operation'], params['step'],params['last_correct'], params.get('task', None))
+        if "image" in params:
+            eq = get_eq_from_img(params["image"])
+            track_img(params, eq)
+            return {"eq_latex": eq}, 200, headers
+
+        raw_solution, is_correct, is_last = calculate(
+            params["operation"],
+            params["step"],
+            params["last_correct"],
+            params.get("task", None),
+        )
         formatted_solution1 = str(raw_solution)
-        print("lo step nel backend: ", params['step'])
-        print("last correct nel backend: ", params['last_correct'])
-        print("pene step nel backend: ", params['pene_step'])
+        print("lo step nel backend: ", params["step"])
+        print("last correct nel backend: ", params["last_correct"])
+        print("pene step nel backend: ", params["pene_step"])
         # if (len(raw_solution) > 1):
         #     formatted_solution2 = str(raw_solution[1])
         # else:
         #     formatted_solution2 = None
-        if(not is_correct):
-            raw_new_step, new_step, op_done, val_used, penultimo_step = next_step(params['last_correct'], params['pene_step'])
+        if not is_correct:
+            raw_new_step, new_step, op_done, val_used, penultimo_step = next_step(
+                params["last_correct"], params["pene_step"]
+            )
         else:
-            raw_new_step, new_step, op_done, val_used, penultimo_step = next_step(params['step'], params['pene_step'])
-        track_event(params, formatted_solution1, is_correct, is_last, new_step, op_done, val_used, penultimo_step)
+            raw_new_step, new_step, op_done, val_used, penultimo_step = next_step(
+                params["step"], params["pene_step"]
+            )
+        track_event(
+            params,
+            formatted_solution1,
+            is_correct,
+            is_last,
+            new_step,
+            op_done,
+            val_used,
+            penultimo_step,
+        )
 
-        return {
-                   'solution': formatted_solution1,
-                   'is_correct': is_correct,
-                   'is_last': is_last,
-                   'new_step': new_step,
-                   'op_done': op_done,
-                   'val_used': val_used,
-                   'penultimo_step': penultimo_step
-               }, 200, headers
+        return (
+            {
+                "solution": formatted_solution1,
+                "is_correct": is_correct,
+                "is_last": is_last,
+                "new_step": new_step,
+                "op_done": op_done,
+                "val_used": val_used,
+                "penultimo_step": penultimo_step,
+            },
+            200,
+            headers,
+        )
     except Exception as e:
         report_exception(error_reporting_client, e)
         abort(500)
 
 
-def track_event(params, formatted_solution1, is_correct, is_last, new_step, op_done, val_used, penultimo_step):
+def track_event(
+    params,
+    formatted_solution1,
+    is_correct,
+    is_last,
+    new_step,
+    op_done,
+    val_used,
+    penultimo_step,
+):
     try:
         batch = firestore_client.batch()
-        user = firestore_client.collection('users').document(params['user_email'])
-        #email = firestore_client.collection('emails').document(params['user_email'])
-        exercise = user.collection('exercises').document(params['exercise_id'])
-        event = exercise.collection('events').document()
+        user = firestore_client.collection("users").document(params["user_email"])
+        # email = firestore_client.collection('emails').document(params['user_email'])
+        exercise = user.collection("exercises").document(params["exercise_id"])
+        event = exercise.collection("events").document()
         data = {
-            'input': {
-                'operation': params['operation'],
-                'step': params['step'],
-                'task': params.get('task', None),
-                'step_number': params['step_number'],
-                'last_correct' :params['last_correct'],
-                'pene_step': params['pene_step']
+            "input": {
+                "operation": params["operation"],
+                "step": params["step"],
+                "task": params.get("task", None),
+                "step_number": params["step_number"],
+                "last_correct": params["last_correct"],
+                "pene_step": params["pene_step"],
             },
-            'output': {
-                'solution': formatted_solution1,
-                'is_correct': is_correct,
-                'is_last': is_last,
-                'new_step': new_step,
-                'op_done': op_done,
-                'val_used': val_used,
-                'penultimo_step': penultimo_step
+            "output": {
+                "solution": formatted_solution1,
+                "is_correct": is_correct,
+                "is_last": is_last,
+                "new_step": new_step,
+                "op_done": op_done,
+                "val_used": val_used,
+                "penultimo_step": penultimo_step,
             },
-            'created_at': firestore.SERVER_TIMESTAMP,
-            'updated_at': firestore.SERVER_TIMESTAMP,
+            "created_at": firestore.SERVER_TIMESTAMP,
+            "updated_at": firestore.SERVER_TIMESTAMP,
         }
-        batch.set(user, {'id': params['user_id'], 'name' : params['user_name'], 'email' : params['user_email'], 'updated_at': firestore.SERVER_TIMESTAMP})
-        batch.set(exercise, {'id': params['exercise_id'], 'updated_at': firestore.SERVER_TIMESTAMP})
+        batch.set(
+            user,
+            {
+                "id": params["user_id"],
+                "name": params["user_name"],
+                "email": params["user_email"],
+                "updated_at": firestore.SERVER_TIMESTAMP,
+            },
+        )
+        batch.set(
+            exercise,
+            {"id": params["exercise_id"], "updated_at": firestore.SERVER_TIMESTAMP},
+        )
+        batch.set(event, data)
+        batch.commit()
+    except Exception as e:
+        report_exception(error_reporting_client, e)
+
+
+def track_img(params, equation):
+    try:
+        batch = firestore_client.batch()
+        user = firestore_client.collection("users").document(params["user_email"])
+        # email = firestore_client.collection('emails').document(params['user_email'])
+        exercise = user.collection("exercises").document(params["exercise_id"])
+        event = exercise.collection("events").document()
+        data = {
+            "user_image": params["image"],
+            "equation": equation,
+            "created_at": firestore.SERVER_TIMESTAMP,
+            "updated_at": firestore.SERVER_TIMESTAMP,
+        }
+        batch.set(
+            user,
+            {
+                "id": params["user_id"],
+                "name": params["user_name"],
+                "email": params["user_email"],
+                "updated_at": firestore.SERVER_TIMESTAMP,
+            },
+        )
+        batch.set(
+            exercise,
+            {"id": params["exercise_id"], "updated_at": firestore.SERVER_TIMESTAMP},
+        )
         batch.set(event, data)
         batch.commit()
     except Exception as e:
@@ -130,12 +215,14 @@ def report_exception(client, exception):
         client.report_exception()
     traceback.print_exc()
 
+
 def next_step(step, pene_step):
     step_solver = AdvanceEq(step, pene_step)
     new_step, string_eq, op_done, val_used, penultimo_step = step_solver.eq_do_step(1)
     return new_step, string_eq, op_done, val_used, penultimo_step
 
-def calculate(operation, step, lastCorrect, task='expand'):
+
+def calculate(operation, step, lastCorrect, task="expand"):
     """
     Function to evaluate single step of mathematical expressions or equations
 
@@ -151,10 +238,10 @@ def calculate(operation, step, lastCorrect, task='expand'):
     """
 
     def solve_expression(op, step):
-        op = parse_expr(op, transformations='all', evaluate=False)
-        step = parse_expr(step, transformations='all', evaluate=False)
-        
-        if task == 'expand':
+        op = parse_expr(op, transformations="all", evaluate=False)
+        step = parse_expr(step, transformations="all", evaluate=False)
+
+        if task == "expand":
             last = expand(op)
 
         else:
@@ -162,34 +249,34 @@ def calculate(operation, step, lastCorrect, task='expand'):
 
         is_correct = simplify(op - step) == 0
         is_last = str(step) == str(last)
-        #is_last = simplify(step - last) == 0
+        # is_last = simplify(step - last) == 0
 
         return last, is_correct, is_last
 
     def solve_equation(eq, step, lastCorrect):
         is_last = False
-        
+
         if step.count("=") > 1:
             return check_solution(lastCorrect, step)
         eq_cmp = eq.split("=")
-        lhs = parse_expr(eq_cmp[0], transformations='all')
-        rhs = parse_expr(eq_cmp[1], transformations='all')
+        lhs = parse_expr(eq_cmp[0], transformations="all")
+        rhs = parse_expr(eq_cmp[1], transformations="all")
         solution = solve(lhs - rhs)
 
         step_cmp = step.split("=")
-        lhs_step = parse_expr(step_cmp[0], transformations='all', evaluate=False)
-        rhs_step = parse_expr(step_cmp[1], transformations='all', evaluate=False)
+        lhs_step = parse_expr(step_cmp[0], transformations="all", evaluate=False)
+        rhs_step = parse_expr(step_cmp[1], transformations="all", evaluate=False)
         solution_step = solve(lhs_step - rhs_step)
 
         is_correct = solution == solution_step
-        
+
         if is_correct:
             if isinstance(lhs_step, Symbol) and not rhs_step.free_symbols:
                 if str(rhs_step) == str(simplify(rhs_step)):
                     is_last = True
         # if is_last:
         #     is_correct = check_solution(solution, step)
-            
+
         return solution, is_correct, is_last
 
     def check_solution(solution, step):
@@ -197,8 +284,8 @@ def calculate(operation, step, lastCorrect, task='expand'):
         sol1 = step_cmp[0].split("=")
         sol2 = step_cmp[1].split("=")
         eq_cmp = lastCorrect.split("=")
-        lhs = parse_expr(eq_cmp[0], transformations='all')
-        rhs = parse_expr(eq_cmp[1], transformations='all')
+        lhs = parse_expr(eq_cmp[0], transformations="all")
+        rhs = parse_expr(eq_cmp[1], transformations="all")
         solution = solve(lhs - rhs)
         if str(solution[0]) == str(sol1[1]) and str(solution[1]) == str(sol2[1]):
             return solution, True, True
@@ -207,8 +294,7 @@ def calculate(operation, step, lastCorrect, task='expand'):
         else:
             return solution, False, False
 
-    if '=' in operation:
+    if "=" in operation:
         return solve_equation(operation, step, lastCorrect)
     else:
         return solve_expression(operation, step)
-
