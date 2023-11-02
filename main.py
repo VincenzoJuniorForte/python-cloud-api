@@ -132,8 +132,11 @@ def report_exception(client, exception):
 
 def next_step(step, pene_step):
     step_solver = AdvanceEq(step, pene_step)
-    new_step, string_eq, op_done, val_used, penultimo_step = step_solver.eq_do_step(1)
-    return new_step, string_eq, op_done, val_used, penultimo_step
+    if step_solver:
+        new_step, string_eq, op_done, val_used, penultimo_step = step_solver.eq_do_step(1)
+        return new_step, string_eq, op_done, val_used, penultimo_step
+    else:
+        return None, None, None, None, "errore"
 
 def calculate(operation, step, lastCorrect, task='expand'):
     """
