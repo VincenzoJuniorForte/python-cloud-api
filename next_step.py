@@ -169,6 +169,7 @@ class AdvanceEq():
     def do_last_step(self):
         self.op_done = "risolto"
         self.val_used = ""
+        self.new_val = ""
         ####print("last step")
         if self.ex_type == "factor":
             return(factor(self.eq))
