@@ -273,24 +273,24 @@ class AdvanceEq():
 
     def eq_do_step(self, steps: int = 1):
         if (str(self.eq) == "0"):
-            return("equazione indeterminata", "Indeterminata", self.op_done, str(self.val_used), "true")
+            return("equazione indeterminata", "Indeterminata", self.op_done, str(self.val_used), str(self.new_val), "true")
         if(check_limit_case(self.eq)):
             return "x=0", "x=0", "x nullo", "x nullo", "true"
         if(check_empty(self.eq)):
             return "Vuota", "Vuota", "Vuota", "Vuota", "Vuota"
         if not self.eq.free_symbols:
-            return ("equazione impossibile", "Impossibile", self.op_done, str(self.val_used), "true")
+            return ("equazione impossibile", "Impossibile", self.op_done, str(self.val_used), str(self.new_val), "true")
         if self.last_step:
             self.eq = self.do_last_step()
             string_eq = str(self.eq)
             #print("string equazione: ", self.eq)
             string_eq = self.format_replace(string_eq)
-            return self.eq, string_eq, self.op_done, str(self.val_used), str(self.last_step)
+            return self.eq, string_eq, self.op_done, str(self.val_used), str(self.last_step), str(self.new_val)
         if self.first_step:
             self.first_step = False
             string_eq = str(self.eq) + " = 0"
             string_eq = self.format_replace(string_eq)
-            return(self.eq, string_eq, self.op_done, "portaSinistra", str(self.last_step))
+            return(self.eq, string_eq, self.op_done, "portaSinistra", str(self.last_step), str(self.new_val))
         for s in range(steps):
             eq = self.eq
             tree = self.extract_parts(eq, 1)
@@ -301,9 +301,9 @@ class AdvanceEq():
             nequ = self.build_expression(ntree)
             self.eq = self.check_step(nequ, tree, step_depth)
             if (str(self.eq) == "0"):
-               return "equazione indeterminata", "Indeterminata", self.op_done, str(self.val_used), "true"
+               return "equazione indeterminata", "Indeterminata", self.op_done, str(self.val_used), str(self.new_val), "true"
             if not self.eq.free_symbols:
-               return "equazione impossibile", "Impossibile", self.op_done, str(self.val_used), "true"
+               return "equazione impossibile", "Impossibile", self.op_done, str(self.val_used), str(self.new_val), "true"
             ###print("new_eq: ", self.eq)
             ###print("step_done: ", self.step_done)
             sr_selfeq = sorted(str(self.eq).replace("(", "").replace(")", "").replace("+", "").replace(" ", "").replace("-1*", "-"))
@@ -316,13 +316,13 @@ class AdvanceEq():
                     self.last_step = "true"
                     string_eq = brutal_right_move(self.eq, self.incognitina)
                     string_eq = self.format_replace(string_eq)
-                    return self.eq, string_eq, self.op_done, "brutal", str(self.last_step)
+                    return self.eq, string_eq, self.op_done, "brutal", str(self.last_step), str(self.new_val)
                 else:
                     self.last_step = false
                     self.eq = self.do_last_step()
                     string_eq = str(self.eq)
                     string_eq = self.format_replace(string_eq)
-                    return self.eq, string_eq, self.op_done, str(self.val_used), str(self.last_step)
+                    return self.eq, string_eq, self.op_done, str(self.val_used), str(self.last_step), str(self.new_val)
             if self.is_eq:
                 string_eq = str(self.eq) + " = 0"
                 string_eq = self.format_replace(string_eq)
@@ -336,7 +336,7 @@ class AdvanceEq():
                 self.step_done = False
                 return(self.eq_do_step(steps))
             self.step_done = False
-        return self.eq, string_eq, self.op_done, str(self.val_used), str(self.last_step)
+        return self.eq, string_eq, self.op_done, str(self.val_used), str(self.last_step), str(self.new_val)
 
     def grade_two_formula_solve(self):
         coeffs = Poly(self.eq).as_dict()
@@ -472,14 +472,15 @@ def remove_unnecessary_parentheses(equation):
 #eq = "2x =   0   " bug da risolvere: caso finale con ax = 0 -> tamponato temporeaneamente
 #eq = "(x+3)/4-(x-3)/(2x+x+2+3)=0"
 #x/4+(5x+27)/(12x+20)=0
-eq = "-9x+8x-(-12x+6x+12^2)=0"
+eq = "3x+2x+3+2=0"
 
 print("equazione: ", eq)
 step_solver = AdvanceEq(eq, "false")
-new_step, string_eq, op_done, val_used, penultimo_step = step_solver.eq_do_step(1)
+new_step, string_eq, op_done, val_used, penultimo_step, new_value = step_solver.eq_do_step(1)
 cleaned_equation_str = remove_unnecessary_parentheses(string_eq)
 print("string eq: ", string_eq)
 print("PULITO: ", cleaned_equation_str)
+print("new_value: ", new_value)
 # print("new_step: ", new_step)
 # print("operazione fattissima: ", op_done) 
 # print("valore usatissimo: ", val_used)

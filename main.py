@@ -70,10 +70,10 @@ def http_handler(request):
         # else:
         #     formatted_solution2 = None
         if(not is_correct):
-            raw_new_step, new_step, op_done, val_used, penultimo_step = next_step(params['last_correct'], params['pene_step'])
+            raw_new_step, new_step, op_done, val_used, penultimo_step, new_val = next_step(params['last_correct'], params['pene_step'])
         else:
-            raw_new_step, new_step, op_done, val_used, penultimo_step = next_step(params['step'], params['pene_step'])
-        track_event(params, formatted_solution1, is_correct, is_last, new_step, op_done, val_used, penultimo_step)
+            raw_new_step, new_step, op_done, val_used, penultimo_step, new_val = next_step(params['step'], params['pene_step'])
+        track_event(params, formatted_solution1, is_correct, is_last, new_step, op_done, val_used, penultimo_step, new_val)
 
         return {
                    'solution': formatted_solution1,
@@ -82,14 +82,15 @@ def http_handler(request):
                    'new_step': new_step,
                    'op_done': op_done,
                    'val_used': val_used,
-                   'penultimo_step': penultimo_step
+                   'penultimo_step': penultimo_step,
+                   'new_val': new_val
                }, 200, headers
     except Exception as e:
         report_exception(error_reporting_client, e)
         abort(500)
 
 
-def track_event(params, formatted_solution1, is_correct, is_last, new_step, op_done, val_used, penultimo_step):
+def track_event(params, formatted_solution1, is_correct, is_last, new_step, op_done, val_used, penultimo_step, new_val):
     try:
         batch = firestore_client.batch()
         user = firestore_client.collection('users').document(params['user_email'])
@@ -112,7 +113,8 @@ def track_event(params, formatted_solution1, is_correct, is_last, new_step, op_d
                 'new_step': new_step,
                 'op_done': op_done,
                 'val_used': val_used,
-                'penultimo_step': penultimo_step
+                'penultimo_step': penultimo_step,
+                'new_val': new_val
             },
             'created_at': firestore.SERVER_TIMESTAMP,
             'updated_at': firestore.SERVER_TIMESTAMP,
@@ -133,8 +135,8 @@ def report_exception(client, exception):
 def next_step(step, pene_step):
     step_solver = AdvanceEq(step, pene_step)
     if step_solver:
-        new_step, string_eq, op_done, val_used, penultimo_step = step_solver.eq_do_step(1)
-        return new_step, string_eq, op_done, val_used, penultimo_step
+        new_step, string_eq, op_done, val_used, penultimo_step, new_val = step_solver.eq_do_step(1)
+        return new_step, string_eq, op_done, val_used, penultimo_step, new_val
     else:
         return None, None, None, None, "errore"
 
