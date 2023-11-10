@@ -51,8 +51,7 @@ from main import next_step
     ("-8x+5=5-8x", "false", "-8x-(5-8x)+5=0"),
     ("-8x-(5-8x)+5=0", "false", "-8x+((8x-5)+5)=0"),
     ("-8x-(5-8x)+5=0", "false", "-8x+((8x-5)+5)=0"),
-    ("-8x+((8x-5)+5)=0", "false", "-8x+(8x+0)=0"), #faschifo
-    ("-8x+(8x+0)=0", "false", "-8x+8x=0"), #??
+    ("-8x+((8x-5)+5)=0", "false", "-8x+8x=0"),
     ("-8x+8x=0", "false", "Indeterminata"),
 
     ("8(x+3) = 8x -24", "false", "8*(x+3)-(8x-24)=0"),
@@ -146,13 +145,14 @@ from main import next_step
     ("5x=144", "true", "x=144/5"),
     
     ("sqrt(4)-2=2x+6", "false", "-(2x+6)-2+sqrt(4)=0"),
-    ("-(2x+6)-2+sqrt(4)=0", "false", "(2-2x)-6=0"),
-    ("(2-2x)-6=0", "false", "-2x-4=0"),
-    ("-2x-4=0", "false", "-2x=4"),
-    ("-2x=4", "true", "x=-2"),
+    ("-(2x+6)-2+sqrt(4)=0", "false", "(-2x+(-2+2))-6=0"),
+    ("(-2x+(-2+2))-6=0", "false", "-2x+(-4-2)=0"),
+    ("-2x+(-4-2)=0", "false", "-2x-6=0"),
+    ("-2x-6=0", "false", "-2x=6"),
+    ("-2x=6", "true", "x=-3"),
 
     ("4^2-2=2x+6", "false", "-(2x+6)-2+4**2=0"),
-    ("-(2x+6)-2+4**2=0", "false", "(-2x+6-2))-6=0"),
+    ("-(2x+6)-2+4**2=0", "false", "(-2x+(-2+16))-6=0"),
 
 
     # END EXPONENTS AND RADICALS
@@ -167,5 +167,5 @@ from main import next_step
 
 ])
 def test_next_step(equation, pene_step, expected):
-    _, new_step, _, _, _ = next_step(equation, pene_step)
+    _, new_step, _, _, _, _ = next_step(equation, pene_step)
     assert new_step == expected

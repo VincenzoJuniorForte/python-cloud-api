@@ -3,7 +3,7 @@ import uuid
 import traceback
 
 from sympy import *
-from next_step import AdvanceEq
+from next_step import AdvanceEq, check_used_fract
 from sympy.parsing.sympy_parser import parse_expr
 import functions_framework
 from google.cloud import error_reporting
@@ -73,6 +73,7 @@ def http_handler(request):
             raw_new_step, new_step, op_done, val_used, penultimo_step, new_val = next_step(params['last_correct'], params['pene_step'])
         else:
             raw_new_step, new_step, op_done, val_used, penultimo_step, new_val = next_step(params['step'], params['pene_step'])
+        op_done = check_used_fract(op_done, val_used)
         track_event(params, formatted_solution1, is_correct, is_last, new_step, op_done, val_used, penultimo_step, new_val)
 
         return {

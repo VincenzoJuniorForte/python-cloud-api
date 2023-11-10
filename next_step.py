@@ -80,6 +80,9 @@ class AdvanceEq():
         return {eq.func.__name__: parts, 'idd': idd}
 
     def manage_add(self, add_expr, idd=1):
+        print("add_expr: ", add_expr)
+        print("type add_expr: ", type(add_expr))
+
         if len(add_expr) == 1:
             if not add_expr[0].args or isinstance(add_expr[0], Pow):
                 #print("sono io: ", add_expr[0])
@@ -87,37 +90,44 @@ class AdvanceEq():
                     if isinstance(add_expr[0].args[0], (Integer, Symbol)):
                         return add_expr[0]
                     else:
-                        ###print("sono io: ", add_expr[0].args[0])
-                        ###print("type sono io: ", type(add_expr[0].args[0]))
+                        #print("sono nell else: ", add_expr[0].args[0])
+                        #print("type sono io: ", type(add_expr[0].args[0]))
                         return({'Pow': [self.manage_add([add_expr[0].args[0]], idd + 50), add_expr[0].args[1]], 'idd': idd + 25})
                 if isinstance(add_expr[0], Pow):
+                    #print("siamo solo pow: ", add_expr[0].args[0])
                     return({'Pow': [self.manage_add([add_expr[0].args[0]], idd + 50), add_expr[0].args[1]], 'idd': idd + 25})
                 #print("finiamo qua")
                 return add_expr[0]
             else:
-                ###print("culo cane ", add_expr[0].args)
+                #print("culo cane ", add_expr[0].args)
                 n_arg = add_expr[0].args
                 if n_arg.__len__() == 1 or not n_arg:
                     return add_expr[0]
 
         parts = []
         for arg in add_expr:
-            ###print("ARG: ", arg)
-            ###print("Type ARG: ", type(arg))
+            print("ARG: ", arg)
+            print("Type ARG: ", type(arg))
             if not(isinstance(arg, dict)) and not isinstance(arg, Mul):
                 if isinstance(arg, (Symbol, Integer)):
                     parts.append(arg)
+                elif isinstance(arg, Pow):
+                    print("siamo solo pow: ", arg)
+                    parts.append({'Pow': [self.manage_add([arg.args[0]], idd + 50), arg.args[1]], 'idd': idd + 25})
                 else:
-                    ###print("argimentoni: ", arg.args)
+                    print("argimentoni: ", arg.args)
                     for piece in arg.args:
                         parts.append(self.manage_add([piece], idd +25))
                         ###print("PEZZO DI M aggiunto: ", piece)
             elif isinstance(arg, Mul):
-                ###print ("argone argone argone: ", arg.args)
+                print ("argone argone argone: ", arg.args)
                 # Check if it's a multiplication
                 operands = arg.args
                 processed_operands = [self.manage_add([operand], idd + 25) for operand in operands]
                 parts.append({'Mul': processed_operands, 'idd': idd + 25})
+            elif isinstance(arg, Pow):
+                print("siamo solo pow: ", arg)
+                return({'Pow': [self.manage_add([arg.args[0]], idd + 50), arg.args[1]], 'idd': idd + 25})
             else:
                 # Handle other cases
                 parts.append(arg)
@@ -196,7 +206,7 @@ class AdvanceEq():
                 ####print("new_expr: ", new_expr)
                 self.val_used = new_expr
                 return(simplify(new_expr))
-            ####print("entro qua pordcoddio", tree)
+            ####print("entro qua pd", tree)
             new_tree = self.evaluate_expression(tree, idd)
             new_expr = self.build_expression(new_tree)
             r_new_expr = str(new_expr).replace("(", "").replace(")", "").replace("+", "").replace(" ", "").replace("-1*", "-")
@@ -241,29 +251,20 @@ class AdvanceEq():
                         self.val_used = value
                         new_value = simplify(value)
                         ###print("idd: ", idd)
-                        # list_eq = [str(term).replace("(", "").replace(")", "") for term in value.as_ordered_terms()]
-                        # req = str(new_value)
-                        # reparse_new_expr = parse_expr(req, transformations='all', evaluate=False)
-                        # list_new_expr = [str(term).replace("(", "").replace(")", "") for term in reparse_new_expr.as_ordered_terms()]
-
-                        # list_eq = sorted(list_eq)
-                        # list_new_expr = sorted(list_new_expr)
-                        # ###print("AVClist_eq: ", list_eq)
-                        # ###print("AVClist_new_expr: ", list_new_expr)
-                        # counter_eq = Counter(list_eq)
-                        # counter_new_expr = Counter(list_new_expr)
                         sr_val = sorted(str(value).replace("(", "").replace(")", "").replace("+", "").replace(" ", "").replace("-1*", "-"))
                         sr_new_val = sorted(str(new_value).replace("(", "").replace(")", "").replace("+", "").replace(" ", "").replace("-1*", "-"))
                         print(f"valore vecchio: {value} valore nuovo: {new_value} check cambio: {sr_val != sr_new_val}")
                         if(sr_val != sr_new_val):
                             ###print("è cambiato")
                             self.new_val = new_value
-                            print("new value: ", self.new_val)
+                            #print("new value: ", self.new_val)
                             self.step_done = True
                     else:
                         ####print("SALVE SONO IO")
                         new_value = self.evaluate_expression(value, idd)
-                    new_values.append(new_value)
+                    check_new_val = str(new_value).replace(" ", "")
+                    if check_new_val != "0":
+                        new_values.append(new_value)
                 else:
                     new_values.append(value)
             ##print ("new_values: ", new_values)
@@ -276,9 +277,9 @@ class AdvanceEq():
         if (str(self.eq) == "0"):
             return("equazione indeterminata", "Indeterminata", self.op_done, str(self.val_used), str(self.new_val), "true")
         if(check_limit_case(self.eq)):
-            return "x=0", "x=0", "x nullo", "x nullo", "true"
+            return "x=0", "x=0", "x nullo", "x nullo", "x nullo", "true"
         if(check_empty(self.eq)):
-            return "Vuota", "Vuota", "Vuota", "Vuota", "Vuota"
+            return "Vuota", "Vuota", "Vuota", "Vuota", "Vuota", "true"
         if not self.eq.free_symbols:
             return ("equazione impossibile", "Impossibile", self.op_done, str(self.val_used), str(self.new_val), "true")
         if self.last_step:
@@ -323,6 +324,7 @@ class AdvanceEq():
                     self.eq = self.do_last_step()
                     string_eq = str(self.eq)
                     string_eq = self.format_replace(string_eq)
+                    self.cleanup_steps()
                     return self.eq, string_eq, self.op_done, str(self.val_used), str(self.last_step), str(self.new_val)
             if self.is_eq:
                 string_eq = str(self.eq) + " = 0"
@@ -337,8 +339,15 @@ class AdvanceEq():
                 self.step_done = False
                 return(self.eq_do_step(steps))
             self.step_done = False
+        self.cleanup_steps()
         return self.eq, string_eq, self.op_done, str(self.val_used), str(self.last_step), str(self.new_val)
 
+    def cleanup_steps(self):
+        self.val_used = str(self.val_used)
+        self.new_value = str(self.new_val)
+        self.op_done = check_used_fract(self.op_done, self.val_used)
+        self.val_used = refactor_val_used(self.val_used, self.op_done)
+        self.new_value = refactor_new_value(self.new_value, self.val_used, self.op_done)
     def grade_two_formula_solve(self):
         coeffs = Poly(self.eq).as_dict()
         if (0,) in coeffs and (1,) in coeffs:
@@ -446,24 +455,71 @@ def check_empty(eq):
         return(True)
     else:
         return(False)
-    
-def remove_unnecessary_parentheses(equation):
-    stack = []
-    new_equation = ""
-    for char in equation:
-        if char == '(':
-            stack.append(len(new_equation))
-        elif char == ')':
-            start = stack.pop()
-            end = len(new_equation)
-            subexpression = new_equation[start:end]
-            if '+' in subexpression or '-' in subexpression:
-                new_equation = new_equation[:start] + subexpression + new_equation[end:]
-            else:
-                new_equation = new_equation[:start] + subexpression[1:-1] + new_equation[end:]
-        new_equation += char
-    return new_equation
 
+def check_used_fract(op_done, val_used):
+    if op_done == "Mul" and ")/" in str(val_used):
+        return "Exp_fract"
+    return op_done
+
+
+
+def refactor_val_used(val_used, op_done):
+    def check_if_symbol(argo):
+        check = False
+        if isinstance(argo, Symbol):
+            check = True
+        elif hasattr(argo, 'args'):
+            for element in argo.args:
+                check = check_if_symbol(element)
+                if check:
+                    break
+        return check
+
+    if op_done == "Add":
+        parsed_val_used = parse_expr(val_used,transformations='all', evaluate=False)
+        s_count = 0
+        s_val_used = ""
+        n_count = 0
+        n_val_used = ""
+        for arg in parsed_val_used.args:
+            if check_if_symbol(arg):
+                s_count += 1
+                s_val_used += str(arg) + "+"
+            else:
+                n_count += 1
+                n_val_used += str(arg) + "+"
+        if s_count == 2:
+            print("temp+s: ", s_val_used)
+            s_val_used = pulisci_val_used(s_val_used, op_done)
+            return s_val_used
+        elif n_count == 2:
+            print("temp+n: ",  n_val_used)
+            n_val_used = pulisci_val_used(n_val_used, op_done)
+            return n_val_used
+    else:
+        return val_used
+
+def pulisci_val_used(val_used, op_done):
+    if op_done == "Add":
+        val_used = val_used.replace("+-", "-")
+        if val_used[-1] == "+":
+            return val_used[:-1]
+        else:
+            return val_used
+    else:
+        return val_used
+
+def refactor_new_value(new_value, val_used, op_done):
+    if val_used == None:
+        return new_value
+    if op_done == "Add":
+        pars_new_value = parse_expr(new_value,transformations='all', evaluate=False)
+        pars_val_used = parse_expr(val_used,transformations='all', evaluate=False)
+        part_to_remove = pars_new_value - pars_val_used
+        return simplify(pars_new_value - part_to_remove)
+    else:
+        return new_value
+    
 #problema pow
 #factor()
 #x = Symbol('x')
@@ -473,26 +529,27 @@ def remove_unnecessary_parentheses(equation):
 #eq = "2x =   0   " bug da risolvere: caso finale con ax = 0 -> tamponato temporeaneamente
 #eq = "(x+3)/4-(x-3)/(2x+x+2+3)=0"
 #x/4+(5x+27)/(12x+20)=0
-eq = "3x+2x+3+2=0"
-
+eq = "(x+3)/4-((x-3)/2+3)=0"
 print("equazione: ", eq)
 step_solver = AdvanceEq(eq, "false")
 new_step, string_eq, op_done, val_used, penultimo_step, new_value = step_solver.eq_do_step(1)
-cleaned_equation_str = remove_unnecessary_parentheses(string_eq)
 print("string eq: ", string_eq)
-print("PULITO: ", cleaned_equation_str)
 print("new_value: ", new_value)
-# print("new_step: ", new_step)
-# print("operazione fattissima: ", op_done) 
-# print("valore usatissimo: ", val_used)
-# ##print("penultimo step: ", penultimo_step)
+#print("new_step: ", new_step)
+print("operazione fattissima: ", op_done) 
+print("valore usatissimo: ", val_used)
+# op_done = check_used_fract(op_done, val_used)
+# val_used = refactor_val_used(val_used, op_done)
+# new_value = refactor_new_value(new_value, val_used, op_done)
+print("valore usato refactored: ", val_used)
+print("valore nuovo refactored: ", new_value)
+###print("penultimo step: ", penultimo_step)
 # equalatex = latex("(x+3)/4-((x/2-3/2)+3)=0")
 # print(equalatex)
 #valuta condizione di uscita se doppio loop
 
 ## valore usatissimo maledetto lui
 ## risolvere val usat con albero
-# 
 
 
 #TODO
