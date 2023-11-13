@@ -344,10 +344,10 @@ class AdvanceEq():
 
     def cleanup_steps(self):
         self.val_used = str(self.val_used)
-        self.new_value = str(self.new_val)
+        self.new_val = str(self.new_val)
         self.op_done = check_used_fract(self.op_done, self.val_used)
         self.val_used = refactor_val_used(self.val_used, self.op_done)
-        self.new_value = refactor_new_value(self.new_value, self.val_used, self.op_done)
+        self.new_val = refactor_new_value(self.new_val, self.val_used, self.op_done)
     def grade_two_formula_solve(self):
         coeffs = Poly(self.eq).as_dict()
         if (0,) in coeffs and (1,) in coeffs:
@@ -529,7 +529,7 @@ def refactor_new_value(new_value, val_used, op_done):
 #eq = "2x =   0   " bug da risolvere: caso finale con ax = 0 -> tamponato temporeaneamente
 #eq = "(x+3)/4-(x-3)/(2x+x+2+3)=0"
 #x/4+(5x+27)/(12x+20)=0
-eq = "(x+3)/4-((x-3)/2+3)=0"
+eq = "2x-2+3x-5=0"
 print("equazione: ", eq)
 step_solver = AdvanceEq(eq, "false")
 new_step, string_eq, op_done, val_used, penultimo_step, new_value = step_solver.eq_do_step(1)
